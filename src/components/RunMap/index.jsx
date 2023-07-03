@@ -19,7 +19,7 @@ import RunMapButtons from './RunMapButtons';
 import styles from './style.module.scss';
 import MapboxGL from 'mapbox-gl';
 
-MapboxGL.accessToken = MAPBOX_TOKEN;
+MapboxGL.accessToken = {MAPBOX_TOKEN};
 MapboxGL.setRTLTextPlugin(
   'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-rtl-text/v0.2.3/mapbox-gl-rtl-text.js',
   null,
