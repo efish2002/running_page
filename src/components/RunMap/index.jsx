@@ -94,6 +94,9 @@ const RunMap = ({
       onViewportChange={setViewport}
       ref={mapRefCallback}
       mapboxApiAccessToken={MAPBOX_TOKEN}
+        onLoad={() => {
+    terrainPlugin.onAdd(mapRef.current.getMap());
+  }}
     >
       <RunMapButtons
         changeYear={changeYear}
@@ -101,6 +104,17 @@ const RunMap = ({
         mapButtonYear={mapButtonYear}
       />
       <FullscreenControl className={styles.fullscreenButton} />
+        <Source id="terrain" type="raster-dem" url="mapbox://mapbox.terrain-rgb">
+    <Layer
+      id="terrain"
+      type="hillshade"
+      paint={{
+        'hillshade-exaggeration': 1.5,
+        'hillshade-shadow-color': '#000',
+        'hillshade-highlight-color': '#fff',
+      }}
+    />
+  </Source>
       <Source id="data" type="geojson" data={geoData}>
         <Layer
           id="province"
