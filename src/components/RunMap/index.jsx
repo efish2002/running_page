@@ -17,18 +17,7 @@ import { geoJsonForMap } from 'src/utils/utils';
 import RunMarker from './RunMaker';
 import RunMapButtons from './RunMapButtons';
 import styles from './style.module.scss';
-import MapboxGL from 'mapbox-gl';
 
-MapboxGL.accessToken = {MAPBOX_TOKEN};
-MapboxGL.setRTLTextPlugin(
-  'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-rtl-text/v0.2.3/mapbox-gl-rtl-text.js',
-  null,
-  true,
-);
-
-const terrainPlugin = new MapboxGL.Plugins.Terrain({
-  terrainExaggeration: 1.5,
-});
 const RunMap = ({
   title,
   viewport,
@@ -94,9 +83,7 @@ const RunMap = ({
       onViewportChange={setViewport}
       ref={mapRefCallback}
       mapboxApiAccessToken={MAPBOX_TOKEN}
-        onLoad={() => {
-    terrainPlugin.onAdd(mapRef.current.getMap());
-  }}
+       
     >
       <RunMapButtons
         changeYear={changeYear}
@@ -104,17 +91,7 @@ const RunMap = ({
         mapButtonYear={mapButtonYear}
       />
       <FullscreenControl className={styles.fullscreenButton} />
-        <Source id="terrain" type="raster-dem" url="mapbox://mapbox.terrain-rgb">
-    <Layer
-      id="terrain"
-      type="hillshade"
-      paint={{
-        'hillshade-exaggeration': 1.5,
-        'hillshade-shadow-color': '#000',
-        'hillshade-highlight-color': '#fff',
-      }}
-    />
-  </Source>
+
       <Source id="data" type="geojson" data={geoData}>
         <Layer
           id="province"
