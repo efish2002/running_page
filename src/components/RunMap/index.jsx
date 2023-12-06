@@ -120,6 +120,13 @@ const RunMap = ({
           }}
         />
       </Source>
+      <Source
+          id="mapbox-dem"
+          type="raster-dem"
+          url="mapbox://mapbox.mapbox-terrain-dem-v1"
+          tileSize={512}
+          maxzoom={14}
+        />
       {isSingleRun && (
         <RunMarker
           startLat={startLat}
