@@ -77,9 +77,13 @@ const RunMap = ({
       {...viewport}
       width="100%"
       height={MAP_HEIGHT}
-      mapStyle="mapbox://styles/mapbox/dark-v11"
+      //mapStyle="mapbox://styles/mapbox/dark-v11"
       // mapStyle="mapbox://styles/gaohao526/climhvcjn015b01qhb3ek9ann"
       //mapStyle="mapbox://styles/mapbox/satellite-v9"
+      maxPitch={85}
+        mapStyle="mapbox://styles/mapbox/satellite-v9"
+        mapboxAccessToken={TOKEN}
+        terrain={{source: 'mapbox-dem', exaggeration: 1.5}}
       onViewportChange={setViewport}
       ref={mapRefCallback}
       mapboxApiAccessToken={MAPBOX_TOKEN}
