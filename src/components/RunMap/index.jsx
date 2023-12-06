@@ -83,8 +83,8 @@ const RunMap = ({
       //maxPitch={85}
       //mapStyle="mapbox://styles/mapbox/satellite-v9"
 
-      mapboxAccessToken={MAPBOX_TOKEN}
-      terrain={{source: 'mapbox-dem', exaggeration: 1.5}}
+      //mapboxAccessToken={MAPBOX_TOKEN}
+      //terrain={{source: 'mapbox-dem', exaggeration: 1.5}}
       onViewportChange={setViewport}
       ref={mapRefCallback}
       mapboxApiAccessToken={MAPBOX_TOKEN}
