@@ -81,9 +81,9 @@ const RunMap = ({
       // mapStyle="mapbox://styles/gaohao526/climhvcjn015b01qhb3ek9ann"
       //mapStyle="mapbox://styles/mapbox/satellite-v9"
       //maxPitch={85}
-        mapStyle="mapbox://styles/mapbox/satellite-v9"
-        //mapboxAccessToken={MAPBOX_TOKEN}
-        //terrain={{source: 'mapbox-dem', exaggeration: 1.5}}
+      mapStyle="mapbox://styles/mapbox/satellite-v9"
+      mapboxAccessToken={MAPBOX_TOKEN}
+      terrain={{source: 'mapbox-dem', exaggeration: 1.5}}
       onViewportChange={setViewport}
       ref={mapRefCallback}
       mapboxApiAccessToken={MAPBOX_TOKEN}
@@ -95,7 +95,13 @@ const RunMap = ({
         mapButtonYear={mapButtonYear}
       />
       <FullscreenControl className={styles.fullscreenButton} />
-
+      <Source
+          id="mapbox-dem"
+          type="raster-dem"
+          url="mapbox://mapbox.mapbox-terrain-dem-v1"
+          tileSize={512}
+          maxzoom={14}
+        />
       <Source id="data" type="geojson" data={geoData}>
         <Layer
           id="province"
@@ -120,13 +126,7 @@ const RunMap = ({
           }}
         />
       </Source>
-      <Source
-          id="mapbox-dem"
-          type="raster-dem"
-          url="mapbox://mapbox.mapbox-terrain-dem-v1"
-          tileSize={512}
-          maxzoom={14}
-        />
+      
       {isSingleRun && (
         <RunMarker
           startLat={startLat}
