@@ -3,7 +3,7 @@ import React, {useRef, useCallback, useState, useEffect} from 'react';
 import Map, {Layer, Source, FullscreenControl, NavigationControl, MapRef} from 'react-map-gl';
 import {MapInstance} from "react-map-gl/src/types/lib";
 import useActivities from '@/hooks/useActivities';
-import {
+import {  
   MAP_LAYER_LIST,
   IS_CHINESE,
   ROAD_LABEL_DISPLAY,
