@@ -13,7 +13,7 @@ import {
 } from '@/utils/const';
 import { Coordinate, geoJsonForMap, colorFromType, formatRunTime, formatSpeedOrPace } from '@/utils/utils';
 import RunMarker from './RunMarker';
-import styles from './style.module.scss';
+import styles from './style.module.css';
 import { FeatureCollection } from 'geojson';
 import { RPGeometry } from '@/static/run_countries';
 import './mapbox.css';
