@@ -13,10 +13,32 @@ import {
 } from '@/utils/const';
 import {
   geoJsonForRuns,
-  colorFromType,
   formatRunTime,
   formatPace,
 } from '@/utils/utils';
+
+// 添加颜色函数（从 workouts_page 复制）
+const colorFromType = (workoutType: string): string => {
+  switch (workoutType) {
+    case 'Run':
+      return '#32D74B';
+    case 'Trail Run':
+      return '#FF9500';
+    case 'Ride':
+    case 'Indoor Ride':
+      return '#007AFF';
+    case 'VirtualRide':
+      return '#5856D6';
+    case 'Hike':
+      return '#8E8E93';
+    case 'Rowing':
+      return '#5AC8FA';
+    case 'Swim':
+      return '#34C759';
+    default:
+      return '#32D74B';
+  }
+};
 import RunMarker from './RunMarker';
 import styles from './style.module.css';
 
