@@ -25,6 +25,19 @@ import { RPGeometry } from '@/static/run_countries';
 import './mapbox.css';
 import LightsControl from "@/components/RunMap/LightsControl";
 
+const calculateBearing = (start, end) => {
+  const PI = Math.PI;
+  const lat1 = (start[1] * PI) / 180;
+  const lon1 = (start[0] * PI) / 180;
+  const lat2 = (end[1] * PI) / 180;
+  const lon2 = (end[0] * PI) / 180;
+  const dLon = lon2 - lon1;
+  const y = Math.sin(dLon) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+  return ((Math.atan2(y, x) * 180) / PI + 360) % 360;
+};
+
+
 interface IRunMapProps {
   title: string;
   viewState: IViewState;
