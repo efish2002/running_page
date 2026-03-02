@@ -18,7 +18,7 @@ import {
   formatPace,
 } from '@/utils/utils';
 import RunMarker from './RunMarker';
-import styles from './style.module.scss';
+import styles from './style.module.css';
 
 const RIDE_TYPES = new Set(['Ride', 'VirtualRide', 'EBikeRide']);
 
