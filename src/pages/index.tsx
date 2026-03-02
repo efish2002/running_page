@@ -88,7 +88,8 @@ const Index = () => {
     if (!selectedRuns.length) {
       return;
     }
-
+// 更新 geoData，触发地图重新渲染
+    setGeoData(geoJsonForRuns(selectedRuns));
     const lastRun = selectedRuns.sort(sortDateFunc)[0];
 
     if (!lastRun) {
