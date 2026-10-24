@@ -1,0 +1,57 @@
+.hud {
+  grid-area: hud;
+  padding: 1.25rem;
+}
+
+.hudTitle {
+  margin: 0.75rem 0 0.6rem;
+  font-size: 2rem;
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: hsl(var(--foreground));
+}
+
+.hudText {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.75;
+  color: hsl(var(--muted));
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.rail {
+  grid-area: rail;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .rail {
+    position: sticky;
+    top: 6rem;
+    max-height: calc(100vh - 7rem);
+    overflow-y: auto;
+    padding-right: 0.25rem;
+  }
+}
+
+.main {
+  grid-area: main;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}

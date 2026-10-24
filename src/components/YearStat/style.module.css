@@ -1,0 +1,71 @@
+.card {
+  position: relative;
+  padding: 0.9rem 1rem;
+  border: 1px solid hsl(var(--line) / 0.14);
+  border-radius: 0.75rem;
+  background: hsl(220 45% 12% / 0.45);
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.card:hover {
+  border-color: hsl(var(--accent) / 0.45);
+  transform: translateX(2px);
+}
+
+.active {
+  border-color: hsl(var(--accent) / 0.55);
+  background: linear-gradient(
+    90deg,
+    hsl(var(--accent) / 0.14),
+    hsl(220 45% 12% / 0.45) 60%
+  );
+  box-shadow:
+    0 0 0 1px hsl(var(--accent) / 0.18),
+    0 10px 30px -22px hsl(var(--accent) / 0.9);
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+}
+
+.year {
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: hsl(var(--foreground));
+}
+
+.active .year {
+  color: hsl(var(--accent));
+}
+
+.tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: hsl(var(--subtle));
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem 0.9rem;
+}
+
+.svg {
+  margin: 0.75rem 0 0.25rem;
+  width: 100%;
+  border: 0;
+  padding: 0;
+}

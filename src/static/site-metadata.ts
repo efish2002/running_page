@@ -10,7 +10,7 @@ interface ISiteMetadataResult {
 }
 
 const data: ISiteMetadataResult = {
-  siteTitle: 'GaoHao\'s Running Page',
+  siteTitle: "GaoHao's Running Page",
   siteUrl: 'https://efish2002.github.io/running_page/',
   logo: 'https://avatars.githubusercontent.com/u/10509616?v=4',
   description: 'Personal site and blog',

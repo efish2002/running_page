@@ -2,7 +2,11 @@
 /*   display: none; */
 /* } */
 .mapboxgl-map {
-  font: 12px/20px Helvetica Neue, Arial, Helvetica, sans-serif;
+  font:
+    12px/20px Helvetica Neue,
+    Arial,
+    Helvetica,
+    sans-serif;
   overflow: hidden;
   position: relative;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
@@ -637,7 +641,12 @@ a.mapboxgl-ctrl-logo.mapboxgl-compact {
 .mapboxgl-scroll-zoom-blocker,
 .mapboxgl-touch-pan-blocker {
   color: #fff;
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial,
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    Segoe UI,
+    Helvetica,
+    Arial,
     sans-serif;
   justify-content: center;
   text-align: center;
@@ -663,4 +672,42 @@ a.mapboxgl-ctrl-logo.mapboxgl-compact {
 .mapboxgl-canvas-container.mapboxgl-touch-pan-blocker-override.mapboxgl-scrollable-page
   .mapboxgl-canvas {
   touch-action: pan-x pan-y;
+}
+
+.mapboxgl-ctrl-group {
+  background: rgba(9, 15, 26, 0.82);
+  border: 1px solid hsl(var(--line) / 0.16);
+  border-radius: 10px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 28px -20px rgba(0, 0, 0, 0.9);
+}
+
+.mapboxgl-ctrl-group button + button {
+  border-top-color: hsl(var(--line) / 0.12);
+}
+
+.mapboxgl-ctrl-group button:not(:disabled):hover {
+  background-color: hsl(var(--accent) / 0.12);
+}
+
+.mapboxgl-ctrl-group button .mapboxgl-ctrl-icon {
+  filter: brightness(0) invert(1);
+  opacity: 0.85;
+}
+
+.mapboxgl-ctrl.mapboxgl-ctrl-attrib,
+.mapboxgl-ctrl-attrib.mapboxgl-compact {
+  color: hsl(var(--muted));
+  background-color: rgba(9, 15, 26, 0.78);
+}
+
+.mapboxgl-ctrl-attrib a {
+  color: hsl(var(--muted));
+}
+
+.mapboxgl-popup-content {
+  color: hsl(var(--foreground));
+  background: hsl(var(--surface-raised));
+  border: 1px solid hsl(var(--line) / 0.14);
+  border-radius: 8px;
 }

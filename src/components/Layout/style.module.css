@@ -1,4 +1,30 @@
 .body {
-  background-color: rgb(26, 26, 26);
-  color: rgb(224, 237, 94);
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'hud' 'main' 'rail';
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1680px;
+  margin: 0 auto 4rem;
+  padding: 1.75rem 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .container {
+    grid-template-columns: 372px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      'hud main'
+      'rail main';
+    gap: 1.75rem;
+    align-items: start;
+    padding: 2rem 2rem 5rem;
+  }
 }

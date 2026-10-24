@@ -1,20 +1,33 @@
-import Stat from '@/components/Stat';
 import useActivities from '@/hooks/useActivities';
+import { intComma } from '@/utils/utils';
+import styles from './style.module.css';
 
 // only support China for now
 const LocationSummary = () => {
   const { years, countries, provinces, cities } = useActivities();
+
+  const items = [
+    { label: 'years', value: years.length },
+    { label: 'countries', value: countries.length },
+    { label: 'provinces', value: provinces.length },
+    { label: 'cities', value: Object.keys(cities).length },
+  ];
+
   return (
-    <div className="cursor-pointer">
-      <section>
-        {years ? <Stat value={`${years.length}`} description=" 年里我跑过" /> : null}
-        {countries ? <Stat value={countries.length} description=" 个国家" /> : null}
-        {provinces ? <Stat value={provinces.length} description=" 个省份" /> : null}
-        {cities ? (
-          <Stat value={Object.keys(cities).length} description=" 个城市" />
-        ) : null}
-      </section>
-      <hr color="red" />
+    <div className={styles.group}>
+      <div className="section-label">
+        <span>coverage / 覆盖</span>
+      </div>
+      <div className={styles.grid}>
+        {items.map((item) => (
+          <div key={item.label} className={styles.summary}>
+            <span className={styles.summaryValue}>
+              {intComma(`${item.value}`)}
+            </span>
+            <span className={styles.summaryLabel}>{item.label}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

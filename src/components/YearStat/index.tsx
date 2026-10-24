@@ -1,16 +1,22 @@
 import { lazy, Suspense } from 'react';
-import Stat from '@/components/Stat';
 import useActivities from '@/hooks/useActivities';
 import { formatPace } from '@/utils/utils';
 import useHover from '@/hooks/useHover';
 import { yearStats } from '@assets/index';
 import { loadSvgComponent } from '@/utils/svgUtils';
+import styles from './style.module.css';
 
-const YearStat = ({ year, onClick }: { year: string, onClick: (_year: string) => void }) => {
+const YearStat = ({
+  year,
+  onClick,
+  active = false,
+}: {
+  year: string;
+  onClick: (_year: string) => void;
+  active?: boolean;
+}) => {
   let { activities: runs, years } = useActivities();
-  // for hover
   const [hovered, eventHandlers] = useHover();
-  // lazy Component
   const YearSVG = lazy(() => loadSvgComponent(yearStats, `./year_${year}.svg`));
 
   if (years.includes(year)) {
@@ -50,26 +56,45 @@ const YearStat = ({ year, onClick }: { year: string, onClick: (_year: string) =>
   );
   return (
     <div
-      className="cursor-pointer"
+      className={`${styles.card} ${active ? styles.active : ''}`}
       onClick={() => onClick(year)}
       {...eventHandlers}
     >
-      <section>
-        <Stat value={year} description=" Journey" />
-        <Stat value={runs.length} description=" Runs" />
-        <Stat value={sumDistance} description=" KM" />
-        <Stat value={avgPace} description=" Avg Pace" />
-        <Stat value={`${streak} day`} description=" Streak" />
+      <div className={styles.head}>
+        <span className={styles.year}>{year}</span>
+        <span className={styles.tag}>{active ? 'live' : 'archived'}</span>
+      </div>
+      <div className={styles.metrics}>
+        <div>
+          <span className="metric-label">runs</span>
+          <span className="metric-value">{runs.length}</span>
+        </div>
+        <div>
+          <span className="metric-label">distance</span>
+          <span className="metric-value metric-value-accent">
+            {sumDistance}
+          </span>
+        </div>
+        <div>
+          <span className="metric-label">pace</span>
+          <span className="metric-value">{avgPace}</span>
+        </div>
+        <div>
+          <span className="metric-label">streak</span>
+          <span className="metric-value">{streak} day</span>
+        </div>
         {hasHeartRate && (
-          <Stat value={avgHeartRate} description=" Avg Heart Rate" />
+          <div className="col-span-2">
+            <span className="metric-label">avg heart rate</span>
+            <span className="metric-value">{avgHeartRate}</span>
+          </div>
         )}
-      </section>
+      </div>
       {year !== 'Total' && hovered && (
         <Suspense fallback="loading...">
-          <YearSVG className="my-4 h-4/6 w-4/6 border-0 p-0" />
+          <YearSVG className={styles.svg} />
         </Suspense>
       )}
-      <hr color="red" />
     </div>
   );
 };

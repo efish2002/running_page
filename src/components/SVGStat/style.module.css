@@ -1,0 +1,28 @@
+.frame {
+  overflow: hidden;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid hsl(var(--line) / 0.14);
+  background: hsl(var(--paper));
+}
+
+.loading {
+  padding: 2rem 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: hsl(var(--subtle));
+}

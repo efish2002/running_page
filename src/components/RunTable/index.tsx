@@ -66,32 +66,41 @@ const RunTable = ({
   };
 
   return (
-    <div className={styles.tableContainer}>
-      <table className={styles.runTable} cellSpacing="0" cellPadding="0">
-        <thead>
-          <tr>
-            <th />
-            {Array.from(sortFuncMap.keys()).map((k) => (
-              <th key={k} onClick={handleClick}>
-                {k}
-              </th>
+    <section className={`panel panel-bracket ${styles.panel}`}>
+      <header className="panel-header">
+        <span className="eyebrow">
+          <span className="status-dot" />
+          activity log / 活动记录
+        </span>
+        <span className="chip">{runs.length} records</span>
+      </header>
+      <div className={styles.tableContainer}>
+        <table className={styles.runTable} cellSpacing="0" cellPadding="0">
+          <thead>
+            <tr>
+              <th />
+              {Array.from(sortFuncMap.keys()).map((k) => (
+                <th key={k} onClick={handleClick}>
+                  {k}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {runs.map((run, elementIndex) => (
+              <RunRow
+                key={run.run_id}
+                elementIndex={elementIndex}
+                locateActivity={locateActivity}
+                run={run}
+                runIndex={runIndex}
+                setRunIndex={setRunIndex}
+              />
             ))}
-          </tr>
-        </thead>
-        <tbody>
-          {runs.map((run, elementIndex) => (
-            <RunRow
-              key={run.run_id}
-              elementIndex={elementIndex}
-              locateActivity={locateActivity}
-              run={run}
-              runIndex={runIndex}
-              setRunIndex={setRunIndex}
-            />
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 };
 

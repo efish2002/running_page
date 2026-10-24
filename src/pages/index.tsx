@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import Layout from '@/components/Layout';
 import LocationStat from '@/components/LocationStat';
@@ -8,7 +8,7 @@ import SVGStat from '@/components/SVGStat';
 import YearsStat from '@/components/YearsStat';
 import useActivities from '@/hooks/useActivities';
 import useSiteMetadata from '@/hooks/useSiteMetadata';
-import { IS_CHINESE } from '@/utils/const';
+import { IS_CHINESE, INFO_MESSAGE } from '@/utils/const';
 import {
   Activity,
   IViewState,
@@ -23,16 +23,21 @@ import {
   titleForShow,
   RunIds,
 } from '@/utils/utils';
+import styles from './style.module.css';
 
 const Index = () => {
   const { siteTitle } = useSiteMetadata();
-  const { activities, thisYear } = useActivities();
+  const { activities, thisYear, years } = useActivities();
   const [year, setYear] = useState(thisYear);
   const [runIndex, setRunIndex] = useState(-1);
   const [runs, setActivity] = useState(
     filterAndSortRuns(activities, year, filterYearRuns, sortDateFunc)
   );
   const [title, setTitle] = useState('');
+  const totalDistance = useMemo(
+    () => activities.reduce((sum, run) => sum + (run.distance || 0), 0) / 1000,
+    [activities]
+  );
   const [geoData, setGeoData] = useState(geoJsonForRuns(runs));
   // for auto zoom
   const bounds = getBoundsForGeoData(geoData);
@@ -88,7 +93,7 @@ const Index = () => {
     if (!selectedRuns.length) {
       return;
     }
-// 更新 geoData，触发地图重新渲染
+    // 更新 geoData，触发地图重新渲染
     setGeoData(geoJsonForRuns(selectedRuns));
     const lastRun = selectedRuns.sort(sortDateFunc)[0];
 
@@ -173,10 +178,22 @@ const Index = () => {
 
   return (
     <Layout>
-      <div className="w-full lg:w-1/3">
-        <h1 className="my-12 text-5xl font-extrabold italic">
+      <section className={`panel panel-bracket ${styles.hud}`}>
+        <div className="eyebrow">
+          <span className="status-dot" />
+          telemetry / 运行遥测
+        </div>
+        <h1 className={styles.hudTitle}>
           <a href="/">{siteTitle}</a>
         </h1>
+        <p className={styles.hudText}>{INFO_MESSAGE(years.length, year)}</p>
+        <div className={styles.chips}>
+          <span className="chip">{years.length} years</span>
+          <span className="chip">{activities.length} runs</span>
+          <span className="chip">{totalDistance.toFixed(0)} km</span>
+        </div>
+      </section>
+      <aside className={styles.rail}>
         {(viewState.zoom ?? 0) <= 3 && IS_CHINESE ? (
           <LocationStat
             changeYear={changeYear}
@@ -186,8 +203,8 @@ const Index = () => {
         ) : (
           <YearsStat year={year} onClick={changeYear} />
         )}
-      </div>
-      <div className="w-full lg:w-2/3">
+      </aside>
+      <div className={styles.main}>
         <RunMap
           title={title}
           viewState={viewState}
@@ -209,7 +226,7 @@ const Index = () => {
         )}
       </div>
       {/* Enable Audiences in Vercel Analytics: https://vercel.com/docs/concepts/analytics/audiences/quickstart */}
-      {import.meta.env.VERCEL && <Analytics /> }
+      {import.meta.env.VERCEL && <Analytics />}
     </Layout>
   );
 };

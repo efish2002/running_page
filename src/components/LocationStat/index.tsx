@@ -6,6 +6,7 @@ import {
 import CitiesStat from './CitiesStat';
 import LocationSummary from './LocationSummary';
 import PeriodStat from './PeriodStat';
+import styles from './style.module.css';
 
 interface ILocationStatProps {
   changeYear: (_year: string) => void;
@@ -18,25 +19,26 @@ const LocationStat = ({
   changeCity,
   changeTitle,
 }: ILocationStatProps) => (
-  <div className="w-full pb-16 lg:w-full lg:pr-16">
-    <section className="pb-0">
-      <p className="leading-relaxed">
-        {CHINESE_LOCATION_INFO_MESSAGE_FIRST}
-        .
+  <section className={`panel panel-bracket ${styles.panel}`}>
+    <header className="panel-header">
+      <span className="eyebrow">
+        <span className="status-dot" />
+        fleet / 城市编队
+      </span>
+      <span className="chip">map focus</span>
+    </header>
+    <div className={styles.body}>
+      <p className={styles.motto}>
+        {CHINESE_LOCATION_INFO_MESSAGE_FIRST}。
         <br />
-        {CHINESE_LOCATION_INFO_MESSAGE_SECOND}
-        .
-        <br />
-        <br />
-        Yesterday you said tomorrow.
+        {CHINESE_LOCATION_INFO_MESSAGE_SECOND}。
       </p>
-    </section>
-    <hr color="red" />
-    <LocationSummary />
-    <CitiesStat onClick={changeCity} />
-    <PeriodStat onClick={changeTitle} />
-    <YearStat year="Total" onClick={changeYear} />
-  </div>
+      <LocationSummary />
+      <CitiesStat onClick={changeCity} />
+      <PeriodStat onClick={changeTitle} />
+      <YearStat year="Total" onClick={changeYear} />
+    </div>
+  </section>
 );
 
 export default LocationStat;
