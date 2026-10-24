@@ -20,11 +20,19 @@ import {
   LIGHTS_ON,
 } from '@/utils/const';
 import {
+  PROVINCE_BASE_COLOR,
   PROVINCE_FILL_COLOR,
+  PROVINCE_BORDER_COLOR,
   COUNTRY_FILL_COLOR,
+  COUNTRY_BORDER_COLOR,
   ROUTE_COLORS,
 } from '@/utils/colors';
-import { Coordinate, IViewState, geoJsonForMap } from '@/utils/utils';
+import {
+  Coordinate,
+  IViewState,
+  worldGeoJsonForMap,
+  chinaGeoJsonForMap,
+} from '@/utils/utils';
 import RunMarker from './RunMarker';
 import RunMapButtons from './RunMapButtons';
 import styles from './style.module.css';
@@ -47,6 +55,17 @@ const calculateBearing = (start, end) => {
   return ((Math.atan2(y, x) * 180) / PI + 360) % 360;
 };
 
+// layers owned by this component, their visibility is driven by props
+const OWN_LAYERS = [
+  'countries',
+  'world-line',
+  'provinces-base',
+  'province',
+  'provinces-line',
+  'runs-glow',
+  'runs2',
+];
+
 interface IRunMapProps {
   title: string;
   viewState: IViewState;
@@ -67,11 +86,10 @@ const RunMap = ({
   const { countries, provinces } = useActivities();
   const mapRef = useRef<MapRef>();
   const [lights, setLights] = useState(PRIVACY_MODE ? false : LIGHTS_ON);
-  const keepWhenLightsOff = ['runs2', 'runs-glow'];
   function switchLayerVisibility(map: MapInstance, lights: boolean) {
     const styleJson = map.getStyle();
     styleJson.layers.forEach((it: { id: string }) => {
-      if (!keepWhenLightsOff.includes(it.id)) {
+      if (!OWN_LAYERS.includes(it.id)) {
         if (lights) map.setLayoutProperty(it.id, 'visibility', 'visible');
         else map.setLayoutProperty(it.id, 'visibility', 'none');
       }
@@ -111,19 +129,12 @@ const RunMap = ({
   filterProvinces.unshift('in', 'name');
   filterCountries.unshift('in', 'name');
 
-  const initGeoDataLength = geoData.features.length;
   const isBigMap = (viewState.zoom ?? 0) <= 3;
-  if (isBigMap && IS_CHINESE) {
-    // Show boundary and line together, combine geoData(only when not combine yet)
-    if (geoData.features.length === initGeoDataLength) {
-      geoData = {
-        type: 'FeatureCollection',
-        features: geoData.features.concat(geoJsonForMap().features),
-      };
-    }
-  }
+  const showBoundaries = IS_CHINESE && isBigMap;
+  const boundaryVisibility = lights ? 'visible' : 'none';
 
   const isSingleRun =
+    !isBigMap &&
     geoData.features.length === 1 &&
     geoData.features[0].geometry.coordinates.length;
   let startLon = 0;
@@ -183,30 +194,70 @@ const RunMap = ({
           ref={mapRefCallback}
           mapboxAccessToken={MAPBOX_TOKEN}
         >
+          {showBoundaries && (
+            <Source
+              id="world-boundary"
+              type="geojson"
+              data={worldGeoJsonForMap}
+            >
+              <Layer
+                id="countries"
+                type="fill"
+                paint={{
+                  'fill-color': COUNTRY_FILL_COLOR,
+                  'fill-opacity': 0.75,
+                }}
+                filter={filterCountries}
+                layout={{ visibility: boundaryVisibility }}
+              />
+              <Layer
+                id="world-line"
+                type="line"
+                paint={{
+                  'line-color': COUNTRY_BORDER_COLOR,
+                  'line-width': 0.6,
+                  'line-opacity': 0.6,
+                }}
+                layout={{ visibility: boundaryVisibility }}
+              />
+            </Source>
+          )}
+          {showBoundaries && (
+            <Source
+              id="china-boundary"
+              type="geojson"
+              data={chinaGeoJsonForMap}
+            >
+              <Layer
+                id="provinces-base"
+                type="fill"
+                paint={{
+                  'fill-color': PROVINCE_BASE_COLOR,
+                }}
+                layout={{ visibility: boundaryVisibility }}
+              />
+              <Layer
+                id="province"
+                type="fill"
+                paint={{
+                  'fill-color': PROVINCE_FILL_COLOR,
+                }}
+                filter={filterProvinces}
+                layout={{ visibility: boundaryVisibility }}
+              />
+              <Layer
+                id="provinces-line"
+                type="line"
+                paint={{
+                  'line-color': PROVINCE_BORDER_COLOR,
+                  'line-width': 0.7,
+                  'line-opacity': 0.85,
+                }}
+                layout={{ visibility: boundaryVisibility }}
+              />
+            </Source>
+          )}
           <Source id="data" type="geojson" data={geoData}>
-            <Layer
-              id="province"
-              type="fill"
-              paint={{
-                'fill-color': PROVINCE_FILL_COLOR,
-              }}
-              filter={filterProvinces}
-            />
-            <Layer
-              id="countries"
-              type="fill"
-              paint={{
-                'fill-color': COUNTRY_FILL_COLOR,
-                // in China, fill a bit lighter while already filled provinces
-                'fill-opacity': [
-                  'case',
-                  ['==', ['get', 'name'], '中国'],
-                  0.1,
-                  0.5,
-                ],
-              }}
-              filter={filterCountries}
-            />
             <Layer
               id="runs-glow"
               type="line"
@@ -255,6 +306,12 @@ const RunMap = ({
               <span className={styles.legendGlow} />
               halo
             </span>
+            {showBoundaries && (
+              <span className={styles.legendItem}>
+                <span className={styles.legendVisit} />
+                visited
+              </span>
+            )}
           </div>
           <FullscreenControl style={fullscreenButton} />
           {!PRIVACY_MODE && (

@@ -52,6 +52,21 @@
 
 .list {
   margin-top: 0.5rem;
+  max-height: 19rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 0.25rem;
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--line) / 0.35) transparent;
+}
+
+.list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.list::-webkit-scrollbar-thumb {
+  border-radius: 2px;
+  background: hsl(var(--line) / 0.35);
 }
 
 .row {

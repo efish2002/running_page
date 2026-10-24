@@ -36,6 +36,11 @@
   min-width: 0;
 }
 
+/* panels keep their natural height, the rail scrolls instead of clipping */
+.rail > * {
+  flex-shrink: 0;
+}
+
 @media (min-width: 1024px) {
   .rail {
     position: sticky;

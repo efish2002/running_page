@@ -12,6 +12,7 @@ import {
   ACTIVITY_TYPES,
   RICH_TITLE,
 } from './const';
+import { cityFromRunName, provinceForCity, provinceForCoordinate } from './geo';
 import { FeatureCollection, LineString } from 'geojson';
 
 export type Coordinate = [number, number];
@@ -125,6 +126,25 @@ const extractCoordinate = (str: string): [number, number] | null => {
 };
 
 const cities = chinaCities.map((c) => c.name);
+
+const decodePath = (run: Activity): Coordinate[] => {
+  try {
+    if (!run.summary_polyline) {
+      return [];
+    }
+    const c = mapboxPolyline.decode(run.summary_polyline);
+    // reverse lat long for mapbox
+    c.forEach((arr) => {
+      [arr[0], arr[1]] = !NEED_FIX_MAP
+        ? [arr[1], arr[0]]
+        : gcoord.transform([arr[1], arr[0]], gcoord.GCJ02, gcoord.WGS84);
+    });
+    return c as Coordinate[];
+  } catch (err) {
+    return [];
+  }
+};
+
 const locationCache = new Map<number, ReturnType<typeof locationForRun>>();
 // what about oversea?
 const locationForRun = (
@@ -168,8 +188,26 @@ const locationForRun = (
       countryMatch = l[2].match(/[\u4e00-\u9fa5].*[\u4e00-\u9fa5]/);
     }
     if (countryMatch) {
-      [country] = countryMatch;
+      // some sources ship "德国;德國", keep the first name only
+      [country] = countryMatch[0].split(';');
     }
+  }
+  // most activities have no location string, fall back to the activity name
+  if (!city) {
+    city = cityFromRunName(run.name);
+  }
+  if (!province && city) {
+    province = provinceForCity(city);
+  }
+  // last resort: locate the run inside the province polygons
+  if (!province) {
+    const points = decodePath(run);
+    if (points.length) {
+      province = provinceForCoordinate(points[0]);
+    }
+  }
+  if (!country && province) {
+    country = '中国';
   }
   if (MUNICIPALITY_CITIES_ARR.includes(city)) {
     province = city;
@@ -194,28 +232,15 @@ const intComma = (x = '') => {
 };
 
 const pathForRun = (run: Activity): Coordinate[] => {
-  try {
-    if (!run.summary_polyline) {
-      return [];
+  const c = decodePath(run);
+  // try to use location city coordinate instead , if runpath is incomplete
+  if (c.length === 2 && String(c[0]) === String(c[1])) {
+    const { coordinate } = locationForRun(run);
+    if (coordinate?.[0] && coordinate?.[1]) {
+      return [coordinate, coordinate];
     }
-    const c = mapboxPolyline.decode(run.summary_polyline);
-    // reverse lat long for mapbox
-    c.forEach((arr) => {
-      [arr[0], arr[1]] = !NEED_FIX_MAP
-        ? [arr[1], arr[0]]
-        : gcoord.transform([arr[1], arr[0]], gcoord.GCJ02, gcoord.WGS84);
-    });
-    // try to use location city coordinate instead , if runpath is incomplete
-    if (c.length === 2 && String(c[0]) === String(c[1])) {
-      const { coordinate } = locationForRun(run);
-      if (coordinate?.[0] && coordinate?.[1]) {
-        return [coordinate, coordinate];
-      }
-    }
-    return c;
-  } catch (err) {
-    return [];
   }
+  return c;
 };
 
 const geoJsonForRuns = (runs: Activity[]): FeatureCollection<LineString> => ({
@@ -236,10 +261,10 @@ const geoJsonForRuns = (runs: Activity[]): FeatureCollection<LineString> => ({
   }),
 });
 
-const geoJsonForMap = (): FeatureCollection<RPGeometry> => ({
-  type: 'FeatureCollection',
-  features: worldGeoJson.features.concat(chinaGeojson.features),
-});
+const worldGeoJsonForMap =
+  worldGeoJson as unknown as FeatureCollection<RPGeometry>;
+
+const chinaGeoJsonForMap: FeatureCollection<RPGeometry> = chinaGeojson;
 
 const getActivitySport = (act: Activity): string => {
   if (act.type === 'Run') {
@@ -356,10 +381,13 @@ const filterYearRuns = (run: Activity, year: string) => {
 };
 
 const filterCityRuns = (run: Activity, city: string) => {
-  if (run && run.location_country) {
-    return run.location_country.includes(city);
+  if (!run) {
+    return false;
   }
-  return false;
+  if (run.location_country && run.location_country.includes(city)) {
+    return true;
+  }
+  return locationForRun(run).city === city;
 };
 const filterTitleRuns = (run: Activity, title: string) =>
   titleForRun(run) === title;
@@ -393,7 +421,8 @@ export {
   intComma,
   pathForRun,
   geoJsonForRuns,
-  geoJsonForMap,
+  worldGeoJsonForMap,
+  chinaGeoJsonForMap,
   titleForRun,
   filterYearRuns,
   filterCityRuns,
