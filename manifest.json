@@ -1,15 +1,15 @@
 {
-  "_activities-34e81c6c.js": {
-    "file": "assets/activities-34e81c6c.js"
+  "_activities-ca65b0b3.js": {
+    "file": "assets/activities-ca65b0b3.js"
   },
   "_vendors-1a30de1e.js": {
     "file": "assets/vendors-1a30de1e.js"
   },
   "assets/github.svg": {
     "assets": [
-      "assets/github-8acff1b9.svg"
+      "assets/github-15534a94.svg"
     ],
-    "file": "assets/github.svg-58c8b80d.js",
+    "file": "assets/github.svg-2a35fa62.js",
     "imports": [
       "_vendors-1a30de1e.js"
     ],
@@ -18,9 +18,9 @@
   },
   "assets/grid.svg": {
     "assets": [
-      "assets/grid-9eef9b67.svg"
+      "assets/grid-0f5e6103.svg"
     ],
-    "file": "assets/grid.svg-a5fa2cf5.js",
+    "file": "assets/grid.svg-90ba7082.js",
     "imports": [
       "_vendors-1a30de1e.js"
     ],
@@ -161,9 +161,9 @@
   },
   "assets/year_2024.svg": {
     "assets": [
-      "assets/year_2024-97f867a9.svg"
+      "assets/year_2024-9f2b5e94.svg"
     ],
-    "file": "assets/year_2024-49e29d09.js",
+    "file": "assets/year_2024-9fc62b98.js",
     "imports": [
       "_vendors-1a30de1e.js"
     ],
@@ -172,9 +172,9 @@
   },
   "assets/year_2025.svg": {
     "assets": [
-      "assets/year_2025-3dbc6a9c.svg"
+      "assets/year_2025-3b3b1a49.svg"
     ],
-    "file": "assets/year_2025-368e2c3c.js",
+    "file": "assets/year_2025-998e7870.js",
     "imports": [
       "_vendors-1a30de1e.js"
     ],
@@ -183,9 +183,9 @@
   },
   "assets/year_2026.svg": {
     "assets": [
-      "assets/year_2026-f3a3149d.svg"
+      "assets/year_2026-f236230a.svg"
     ],
-    "file": "assets/year_2026-8df21f1c.js",
+    "file": "assets/year_2026-c31f92b7.js",
     "imports": [
       "_vendors-1a30de1e.js"
     ],
@@ -219,10 +219,10 @@
       "assets/github.svg",
       "assets/grid.svg"
     ],
-    "file": "assets/index-c8ff307f.js",
+    "file": "assets/index-ed9c2037.js",
     "imports": [
       "_vendors-1a30de1e.js",
-      "_activities-34e81c6c.js"
+      "_activities-ca65b0b3.js"
     ],
     "isEntry": true,
     "src": "index.html"
