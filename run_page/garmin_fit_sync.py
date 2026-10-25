@@ -8,9 +8,11 @@ the database.
 
 import argparse
 import asyncio
+import bisect
 import os
 import sqlite3
 import zipfile
+from datetime import datetime, timezone
 from io import BytesIO
 
 from config import FOLDER_DICT, JSON_FILE, SQL_FILE, config
@@ -19,6 +21,27 @@ from utils import make_activities_file
 
 # Garmin's GPX export service gives up on activities longer than this.
 GPX_EXPORT_LIMIT = 8 * 3600
+
+# The first recorded point of a run can be a few seconds behind the activity
+# start, so the start times are compared with some slack.
+START_TOLERANCE = 120
+
+
+def parse_utc(value):
+    """Parse a UTC timestamp as used by Garmin and the database."""
+    value = str(value or "").strip().replace("T", " ")
+    if value.endswith("Z"):
+        value = value[:-1]
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S.%f"):
+        try:
+            return (
+                datetime.strptime(value[:26], fmt)
+                .replace(tzinfo=timezone.utc)
+                .timestamp()
+            )
+        except ValueError:
+            continue
+    return None
 
 
 def recorded_activity_ids():
@@ -35,17 +58,31 @@ def recorded_activity_ids():
 
 
 def recorded_start_times():
-    """UTC start times of the activities already stored in the database."""
-    times = set()
+    """Sorted UTC start times of the activities already in the database."""
+    times = []
     if not os.path.exists(SQL_FILE):
         return times
     connection = sqlite3.connect(SQL_FILE)
     try:
         for (start_date,) in connection.execute("select start_date from activities"):
-            times.add(str(start_date)[:19])
+            parsed = parse_utc(start_date)
+            if parsed is not None:
+                times.append(parsed)
     finally:
         connection.close()
+    times.sort()
     return times
+
+
+def is_recorded(start, times):
+    """True when the activity is already in the database."""
+    if start is None or not times:
+        return False
+    index = bisect.bisect_left(times, start)
+    for candidate in times[max(0, index - 1) : index + 1]:
+        if abs(candidate - start) <= START_TOLERANCE:
+            return True
+    return False
 
 
 async def get_all_activities(client, start=0):
@@ -78,55 +115,73 @@ async def download_fit(client, activity_id):
 async def run(secret_string, auth_domain, is_only_running, threshold, list_only):
     client = Garmin(secret_string, auth_domain, is_only_running)
     activities = await get_all_activities(client)
-    print(f"garmin returned {len(activities)} activities")
-
+    db_times = recorded_start_times()
     known_ids = recorded_activity_ids()
-    known_times = recorded_start_times()
+    print(f"garmin returned {len(activities)} activities")
+    print(f"the database holds {len(db_times)} activities")
 
-    long_count = 0
+    long_activities = []
     missing = []
     for activity in activities:
         activity_id = str(activity.get("activityId", ""))
         duration = float(activity.get("duration") or 0)
-        start = str(activity.get("startTimeGMT", ""))[:19]
-        if duration <= threshold:
-            continue
-        long_count += 1
-        if activity_id in known_ids or start in known_times:
-            continue
-        missing.append(
-            {
-                "id": activity_id,
-                "name": activity.get("activityName", ""),
-                "duration": duration,
-                "start": start,
-            }
+        start_text = str(activity.get("startTimeGMT", ""))
+        start = parse_utc(start_text)
+        recorded = is_recorded(start, db_times)
+        if duration > threshold:
+            long_activities.append(
+                {
+                    "id": activity_id,
+                    "name": activity.get("activityName", ""),
+                    "duration": duration,
+                    "start": start_text,
+                    "recorded": recorded,
+                    "has_file": activity_id in known_ids,
+                }
+            )
+        if not recorded:
+            missing.append(
+                {
+                    "id": activity_id,
+                    "name": activity.get("activityName", ""),
+                    "duration": duration,
+                    "start": start_text,
+                    "has_file": activity_id in known_ids,
+                }
+            )
+
+    print(f"activities longer than {threshold / 3600:.0f}h: {len(long_activities)}")
+    for activity in long_activities:
+        print(
+            f"  {activity['id']} {activity['duration'] / 3600:.2f}h {activity['start']}"
+            f" recorded={'yes' if activity['recorded'] else 'NO'}"
+            f" file={'yes' if activity['has_file'] else 'no'} {activity['name']}"
         )
 
-    print(f"activities longer than {threshold / 3600:.0f}h: {long_count}")
-    print(f"of those, not recorded yet: {len(missing)}")
+    print(f"activities missing from the database: {len(missing)}")
     for activity in missing:
         print(
-            f"MISSING {activity['id']} {activity['duration'] / 3600:.2f}h"
-            f" {activity['start']} {activity['name']}"
+            f"  {activity['id']} {activity['duration'] / 3600:.2f}h {activity['start']}"
+            f" file={'yes' if activity['has_file'] else 'no'} {activity['name']}"
         )
 
-    if not missing:
-        await client.req.aclose()
-        return
+    to_download = [activity for activity in missing if activity["duration"] > threshold]
+    print(
+        f"of those, over {threshold / 3600:.0f}h and in need of a fit file: {len(to_download)}"
+    )
 
-    if list_only:
+    if not to_download or list_only:
         await client.req.aclose()
         return
 
     await gather_with_concurrency(
         5,
-        [download_fit(client, activity["id"]) for activity in missing],
+        [download_fit(client, activity["id"]) for activity in to_download],
     )
     await client.req.aclose()
 
     titles = {}
-    for activity in missing:
+    for activity in to_download:
         titles[activity["id"]] = activity["name"]
         titles[f"{activity['id']}_ACTIVITY"] = activity["name"]
 
@@ -157,7 +212,7 @@ if __name__ == "__main__":
         dest="threshold",
         type=int,
         default=GPX_EXPORT_LIMIT,
-        help="only look at activities longer than this many seconds",
+        help="only consider activities longer than this many seconds",
     )
     parser.add_argument(
         "--list-only",
