@@ -3,34 +3,34 @@ export interface MonthGridRun {
   distance: number;
 }
 
-export interface MonthCell {
+export interface MonthCell<T = MonthGridRun> {
   // null marks a padding cell, either before the first or after the last day
   day: number | null;
   distance: number;
-  runs: MonthGridRun[];
+  runs: T[];
 }
 
 const WEEKS = 6;
 
-const emptyCell = (): MonthCell => ({ day: null, distance: 0, runs: [] });
+const emptyCell = <T>(): MonthCell<T> => ({ day: null, distance: 0, runs: [] });
 
 /**
  * Builds the six week grid of a month, Sunday first.
  * Every day carries the distance and the runs recorded on it.
  */
-export const buildMonthGrid = (
+export const buildMonthGrid = <T extends MonthGridRun>(
   year: number,
   month: number,
-  runs: MonthGridRun[]
-): MonthCell[] => {
+  runs: T[]
+): MonthCell<T>[] => {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const cells: MonthCell[] = [];
+  const cells: MonthCell<T>[] = [];
 
   for (let i = 0; i < new Date(year, month, 1).getDay(); i++) {
     cells.push(emptyCell());
   }
 
-  const byDay = new Map<number, MonthGridRun[]>();
+  const byDay = new Map<number, T[]>();
   for (const run of runs) {
     if (!run?.start_date_local) {
       continue;

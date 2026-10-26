@@ -3,6 +3,7 @@ import { Analytics } from '@vercel/analytics/react';
 import Layout from '@/components/Layout';
 import LocationStat from '@/components/LocationStat';
 import MonthCalendar from '@/components/MonthCalendar';
+import PhysiologyTrends from '@/components/PhysiologyTrends';
 import RunMap from '@/components/RunMap';
 import RunTable from '@/components/RunTable';
 import SVGStat from '@/components/SVGStat';
@@ -216,6 +217,7 @@ const Index = () => {
           year={year}
           onSelectRuns={locateActivity}
         />
+        <PhysiologyTrends activities={activities} year={year} />
         {year === 'Total' ? (
           <SVGStat />
         ) : (
