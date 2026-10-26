@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import sys
@@ -7,8 +8,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "run_page"))
 
 from garmin_metrics_sync import (  # noqa: E402
     build_record,
+    collect,
     normalise_start,
     pick,
+    resolve_start,
     write_output,
 )
 
@@ -119,6 +122,113 @@ class WriteOutputTest(unittest.TestCase):
                 os.remove(path)
         self.assertEqual(payload["activities"][0]["start_date"], "2020-05-01 07:00:00")
         self.assertEqual(len(written["activities"]), 2)
+
+
+class ResolveStartTest(unittest.TestCase):
+    def test_prefers_the_text_start_of_the_activity(self):
+        activity = {"startTimeGMT": "2020-07-08 22:35:23"}
+        detail = {"startTimeGMT": "2020-07-08 22:35:23"}
+        self.assertEqual(resolve_start(activity, detail), "2020-07-08 22:35:23")
+
+    def test_reads_the_start_of_the_detail_when_the_activity_has_none(self):
+        self.assertEqual(
+            resolve_start({}, {"startTimeGMT": "2020-07-08 22:35:23"}),
+            "2020-07-08 22:35:23",
+        )
+
+    def test_reads_an_epoch_start(self):
+        activity = {"activityStartTimestampGMT": 1594254923000}
+        self.assertEqual(resolve_start(activity, {}), "2020-07-09 00:35:23")
+
+    def test_reads_an_epoch_start_of_the_detail(self):
+        detail = {"beginTimestamp": 1594254923000}
+        self.assertEqual(resolve_start({}, detail), "2020-07-09 00:35:23")
+
+    def test_returns_none_when_no_start_is_offered(self):
+        self.assertIsNone(resolve_start({}, {}))
+
+
+class FakeResponse:
+    status_code = 200
+
+    def __init__(self, payload):
+        self._payload = payload
+
+    def raise_for_status(self):
+        return None
+
+    def json(self):
+        return self._payload
+
+
+class FakeRequest:
+    def __init__(self, activities, details):
+        self.activities = activities
+        self.details = details
+        self.requested = []
+
+    async def get(self, url, headers=None):
+        self.requested.append(url)
+        if "search/activities" in url:
+            return FakeResponse(list(self.activities))
+        for activity_id, payload in self.details.items():
+            if url.endswith("/" + str(activity_id)):
+                return FakeResponse(payload)
+        return FakeResponse(None)
+
+
+class FakeClient:
+    modern_url = "https://connectapi.example"
+    activity_url = "https://connectapi.example/activity-service/activity"
+    headers = {"Authorization": "Bearer test"}
+
+    def __init__(self, activities, details):
+        self.req = FakeRequest(activities, details)
+
+
+class CollectTest(unittest.TestCase):
+    def setUp(self):
+        import garmin_metrics_sync
+
+        self.module = garmin_metrics_sync
+        self.original = garmin_metrics_sync.GARMIN_METRICS_CACHE
+        self.path = os.path.join(
+            os.path.dirname(__file__), "garmin_metrics_cache_tmp.json"
+        )
+        garmin_metrics_sync.GARMIN_METRICS_CACHE = self.path
+        self.activities = [
+            {
+                "activityId": 1,
+                "activityName": "a",
+                "startTimeGMT": "2020-07-08 22:35:23",
+            },
+            {"activityId": 2, "activityName": "b"},
+        ]
+        self.details = {
+            "1": {"vo2MaxValue": 50.0},
+            "2": {"vo2MaxValue": 51.0},
+        }
+
+    def tearDown(self):
+        self.module.GARMIN_METRICS_CACHE = self.original
+        if os.path.exists(self.path):
+            os.remove(self.path)
+
+    def test_keeps_the_activities_that_carry_a_start(self):
+        client = FakeClient(self.activities, self.details)
+        cache = asyncio.run(collect(client, {}, False, 0))
+        self.assertIn("1", cache)
+        self.assertNotIn("2", cache)
+
+    def test_asks_again_for_an_activity_without_a_start(self):
+        client = FakeClient(self.activities, self.details)
+        cache = asyncio.run(collect(client, {}, False, 0))
+        again = FakeClient(self.activities, self.details)
+        asyncio.run(collect(again, cache, False, 0))
+        self.assertTrue(
+            any(url.endswith("/2") for url in again.req.requested),
+            "an activity without a start has to be requested again",
+        )
 
 
 if __name__ == "__main__":

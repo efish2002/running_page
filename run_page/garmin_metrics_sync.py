@@ -79,6 +79,38 @@ def normalise_start(value):
     return text
 
 
+# The epoch fields hold the same moment as the text field, they are the
+# fallback for the accounts that only answer with milliseconds.
+EPOCH_START_FIELDS = ("activityStartTimestampGMT", "beginTimestamp")
+TEXT_START_FIELDS = ("startTimeGMT",)
+
+
+def resolve_start(activity, detail):
+    """The UTC start of an activity, no matter which field the API answers."""
+    for source in (activity, detail):
+        if not isinstance(source, dict):
+            continue
+        for name in EPOCH_START_FIELDS:
+            value = source.get(name)
+            if value is None:
+                continue
+            try:
+                seconds = float(value) / 1000
+            except (TypeError, ValueError):
+                continue
+            try:
+                return datetime.fromtimestamp(seconds, timezone.utc).strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                )
+            except (OverflowError, OSError, ValueError):
+                continue
+        for name in TEXT_START_FIELDS:
+            text = normalise_start(source.get(name))
+            if text:
+                return text
+    return None
+
+
 def activity_name(activity):
     name = activity.get("activityName") or activity.get("name") or ""
     return str(name).strip()
@@ -89,9 +121,7 @@ def build_record(activity, detail):
     record = {
         "id": str(activity.get("activityId", "")),
         "name": activity_name(activity),
-        "start_date": normalise_start(
-            activity.get("startTimeGMT") or pick(detail, ("startTimeGMT",))
-        ),
+        "start_date": resolve_start(activity, detail),
         "distance": as_float(activity.get("distance")),
         "duration": as_float(activity.get("duration")),
     }
@@ -198,19 +228,28 @@ async def collect(client, cache, refresh, limit):
 
     done = 0
     failures = 0
+    unplaced = 0
     for future in asyncio.as_completed(tasks):
         activity, detail = await future
         activity_id = str(activity.get("activityId", ""))
-        if detail:
-            cache[activity_id] = build_record(activity, detail)
-        else:
+        if not detail:
             failures += 1
+        else:
+            record = build_record(activity, detail)
+            if record.get("start_date"):
+                cache[activity_id] = record
+            else:
+                # an activity without a start cannot be placed in the calendar,
+                # it is asked again on the next run
+                unplaced += 1
         done += 1
         if done % 50 == 0:
             print(f"  fetched {done}/{len(pending)} details")
             save_cache(cache)
     if failures:
         print(f"{failures} activities could not be read")
+    if unplaced:
+        print(f"{unplaced} activities carry no start time")
     save_cache(cache)
     return cache
 
