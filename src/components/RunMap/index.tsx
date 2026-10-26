@@ -177,7 +177,7 @@ const RunMap = ({
   }, []);
 
   return (
-    <section className={`panel panel-bracket ${styles.frame}`}>
+    <section className={`panel panel-bracket ${styles.frame}`} data-run-map>
       <header className="panel-header">
         <span className="eyebrow">
           <span className="status-dot" />

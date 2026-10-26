@@ -35,6 +35,7 @@
     "data:analysis": "python3 run_page/gen_svg.py --from-db --type github --output assets/github.svg",
     "build": "vite build",
     "develop": "vite dev",
+    "test": "node --test \"test/**/*.test.mjs\"",
     "serve": "vite serve",
     "lint": "eslint --ext .ts,.tsx src --fix",
     "check": "prettier --write src/main.tsx src/**/*.{css,json,ts,tsx} *.{md,yaml,json,ts,js}",

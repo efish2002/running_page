@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import Layout from '@/components/Layout';
 import LocationStat from '@/components/LocationStat';
+import MonthCalendar from '@/components/MonthCalendar';
 import RunMap from '@/components/RunMap';
 import RunTable from '@/components/RunTable';
 import SVGStat from '@/components/SVGStat';
@@ -9,6 +10,7 @@ import YearsStat from '@/components/YearsStat';
 import useActivities from '@/hooks/useActivities';
 import useSiteMetadata from '@/hooks/useSiteMetadata';
 import { IS_CHINESE, INFO_MESSAGE } from '@/utils/const';
+import { selectRunsByIds } from '@/utils/runSelection';
 import {
   Activity,
   IViewState,
@@ -84,11 +86,7 @@ const Index = () => {
   };
 
   const locateActivity = (runIds: RunIds) => {
-    const ids = new Set(runIds);
-
-    const selectedRuns = !runIds.length
-      ? runs
-      : runs.filter((r: any) => ids.has(r.run_id));
+    const selectedRuns = selectRunsByIds(activities, runs, runIds);
 
     if (!selectedRuns.length) {
       return;
@@ -212,6 +210,11 @@ const Index = () => {
           setViewState={setViewState}
           changeYear={changeYear}
           thisYear={year}
+        />
+        <MonthCalendar
+          activities={activities}
+          year={year}
+          onSelectRuns={locateActivity}
         />
         {year === 'Total' ? (
           <SVGStat />
