@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import {
+  ACWR_LABELS,
+  BALANCE_LABELS,
+  HRV_LABELS,
+  READINESS_LABELS,
   TONE_COLOURS,
   TONE_LABELS,
+  TREND_LABELS,
   baselineBand,
   inYear,
   latestOf,
@@ -152,5 +157,32 @@ const balances = loadBalanceOf(
 );
 assert.equal(balances.length, 2, 'only the months of the year are kept');
 assert.equal(balances[1].month, '2026-04');
+
+// --- the labels Garmin actually sends -------------------------------------
+
+assert.equal(HRV_LABELS.BALANCED, '平衡');
+assert.equal(HRV_LABELS.UNBALANCED, '不平衡');
+assert.equal(HRV_LABELS.LOW, '偏低');
+assert.equal(HRV_LABELS.NONE, '无数据', 'a night without a reading');
+
+assert.equal(READINESS_LABELS.HIGH, '良好');
+assert.equal(READINESS_LABELS.MODERATE, '一般');
+assert.equal(READINESS_LABELS.LOW, '偏低');
+assert.equal(READINESS_LABELS.POOR, '较差');
+
+assert.equal(TREND_LABELS.ACCLIMATIZING, '适应中');
+assert.equal(TREND_LABELS.ACCLIMATED, '已适应');
+assert.equal(TREND_LABELS.DEACCLIMATIZING, '脱适应');
+
+assert.equal(BALANCE_LABELS.BALANCED, '均衡');
+assert.equal(BALANCE_LABELS.ANAEROBIC_SHORTAGE, '无氧不足');
+assert.ok(BALANCE_LABELS.AEROBIC_LOW_SHORTAGE, 'a low aerobic shortage');
+assert.ok(BALANCE_LABELS.AEROBIC_HIGH_SHORTAGE, 'a high aerobic shortage');
+assert.ok(BALANCE_LABELS.AEROBIC_HIGH_FOCUS, 'a focus on the high aerobic');
+
+assert.equal(ACWR_LABELS.OPTIMAL, '最佳');
+assert.equal(ACWR_LABELS.LOW, '偏低');
+assert.equal(ACWR_LABELS.HIGH, '偏高');
+assert.equal(ACWR_LABELS.VERY_HIGH, '极高');
 
 console.log('training status tests passed');

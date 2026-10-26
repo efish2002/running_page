@@ -128,22 +128,28 @@ export const HRV_LABELS: Record<string, string> = {
   UNBALANCED: '不平衡',
   LOW: '偏低',
   POOR: '较差',
+  NONE: '无数据',
 };
 
 export const READINESS_LABELS: Record<string, string> = {
   HIGH: '良好',
   MODERATE: '一般',
   LOW: '偏低',
+  POOR: '较差',
 };
 
 export const TREND_LABELS: Record<string, string> = {
   ACCLIMATIZING: '适应中',
+  ACCLIMATED: '已适应',
   DEACCLIMATIZING: '脱适应',
 };
 
 export const BALANCE_LABELS: Record<string, string> = {
   AEROBIC_SHORTAGE: '有氧不足',
   ANAEROBIC_SHORTAGE: '无氧不足',
+  AEROBIC_LOW_SHORTAGE: '有氧低强度不足',
+  AEROBIC_HIGH_SHORTAGE: '有氧高强度不足',
+  AEROBIC_HIGH_FOCUS: '有氧高强度偏重',
   AEROBIC_EXCESS: '有氧过量',
   ANAEROBIC_EXCESS: '无氧过量',
   BALANCED: '均衡',
@@ -153,6 +159,7 @@ export const BALANCE_LABELS: Record<string, string> = {
 export const ACWR_LABELS: Record<string, string> = {
   OPTIMAL: '最佳',
   HIGH: '偏高',
+  VERY_HIGH: '极高',
   LOW: '偏低',
 };
 
