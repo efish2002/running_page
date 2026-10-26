@@ -11,6 +11,7 @@ on:
         options:
           - garmin_cn
           - garmin_fit
+          - garmin_metrics
           - only_gpx
           - only_fit
   schedule:
@@ -172,13 +173,13 @@ jobs:
           python run_page/garmin_fit_sync.py ${{ secrets.GARMIN_SECRET_STRING_CN }} --only-run --is-cn
 
       - name: Run sync Garmin activity metrics script
-        if: env.RUN_TYPE == 'garmin_cn' || env.RUN_TYPE == 'garmin_fit'
+        if: env.RUN_TYPE == 'garmin_cn' || env.RUN_TYPE == 'garmin_fit' || env.RUN_TYPE == 'garmin_metrics'
         run: |
           # pulls the physiological metrics Garmin records for every activity
           python run_page/garmin_metrics_sync.py ${{ secrets.GARMIN_SECRET_STRING_CN }} --is-cn
 
       - name: Commit Garmin activity metrics
-        if: env.RUN_TYPE == 'garmin_cn' || env.RUN_TYPE == 'garmin_fit'
+        if: env.RUN_TYPE == 'garmin_cn' || env.RUN_TYPE == 'garmin_fit' || env.RUN_TYPE == 'garmin_metrics'
         run: |
           git add src/static/garmin_metrics.json
           if git diff --cached --quiet; then

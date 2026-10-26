@@ -172,6 +172,9 @@ async def fetch_json(client, url, attempts=4):
                 print(f"  rate limited, waiting {wait}s")
                 await asyncio.sleep(wait)
                 continue
+            if response.status_code == 404:
+                # the activity is gone, asking again does not help
+                return None
             response.raise_for_status()
             return response.json()
         except Exception as err:
@@ -203,7 +206,9 @@ async def list_activities(client):
 async def fetch_detail(client, activity, semaphore):
     """Read the detail of one activity, the API rate limits bursts."""
     activity_id = activity.get("activityId")
-    url = f"{client.activity_url}/{activity_id}"
+    # the client carries the activity url as a template, the real address is
+    # built from the modern url the same way garmin_sync.py asks for a detail
+    url = f"{client.modern_url}/activity-service/activity/{activity_id}"
     async with semaphore:
         detail = await fetch_json(client, url)
     return activity, detail

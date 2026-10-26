@@ -149,12 +149,13 @@ class ResolveStartTest(unittest.TestCase):
 
 
 class FakeResponse:
-    status_code = 200
-
-    def __init__(self, payload):
+    def __init__(self, payload, status=200):
         self._payload = payload
+        self.status_code = status
 
     def raise_for_status(self):
+        if self.status_code >= 400:
+            raise RuntimeError(f"{self.status_code} error")
         return None
 
     def json(self):
@@ -162,9 +163,10 @@ class FakeResponse:
 
 
 class FakeRequest:
-    def __init__(self, activities, details):
+    def __init__(self, activities, details, missing=()):
         self.activities = activities
         self.details = details
+        self.missing = set(missing)
         self.requested = []
 
     async def get(self, url, headers=None):
@@ -173,17 +175,19 @@ class FakeRequest:
             return FakeResponse(list(self.activities))
         for activity_id, payload in self.details.items():
             if url.endswith("/" + str(activity_id)):
+                if activity_id in self.missing:
+                    return FakeResponse(None, status=404)
                 return FakeResponse(payload)
         return FakeResponse(None)
 
 
 class FakeClient:
     modern_url = "https://connectapi.example"
-    activity_url = "https://connectapi.example/activity-service/activity"
+    activity_url = "https://connectapi.example/activity-service/activity/{activity_id}"
     headers = {"Authorization": "Bearer test"}
 
-    def __init__(self, activities, details):
-        self.req = FakeRequest(activities, details)
+    def __init__(self, activities, details, missing=()):
+        self.req = FakeRequest(activities, details, missing)
 
 
 class CollectTest(unittest.TestCase):
@@ -229,6 +233,24 @@ class CollectTest(unittest.TestCase):
             any(url.endswith("/2") for url in again.req.requested),
             "an activity without a start has to be requested again",
         )
+
+    def test_asks_for_the_activity_with_its_id(self):
+        client = FakeClient(self.activities, self.details)
+        asyncio.run(collect(client, {}, False, 0))
+        self.assertTrue(
+            any(url.endswith("/1") for url in client.req.requested),
+            "the detail url carries the id of the activity",
+        )
+        self.assertFalse(
+            any("{activity_id}" in url for url in client.req.requested),
+            "the url template has to be filled in",
+        )
+
+    def test_asks_once_for_an_activity_that_is_gone(self):
+        client = FakeClient(self.activities, self.details, missing={"2"})
+        asyncio.run(collect(client, {}, False, 0))
+        calls = [url for url in client.req.requested if url.endswith("/2")]
+        self.assertEqual(len(calls), 1, "a missing activity is asked once")
 
 
 if __name__ == "__main__":
