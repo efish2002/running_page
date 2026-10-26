@@ -109,10 +109,11 @@
 }
 
 .weekday {
-  padding-bottom: 0.35rem;
+  padding-bottom: 0.4rem;
   text-align: center;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 12px;
+  line-height: 1;
   letter-spacing: 0.1em;
   color: hsl(var(--subtle));
 }
@@ -148,15 +149,15 @@
 
 .dayNumber {
   position: absolute;
-  top: 4px;
-  left: 5px;
+  top: 5px;
+  left: 6px;
   z-index: 2;
-  min-width: 1.2rem;
-  padding: 2px 4px;
-  border-radius: 5px;
+  min-width: 1.6rem;
+  padding: 3px 5px;
+  border-radius: 6px;
   background: hsl(222 60% 5% / 0.6);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 13px;
   line-height: 1;
   color: hsl(var(--muted));
   pointer-events: none;
@@ -193,11 +194,11 @@
 
 .heatValue {
   position: absolute;
-  right: 4px;
-  bottom: 3px;
+  right: 5px;
+  bottom: 4px;
   z-index: 2;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   line-height: 1;
   color: hsl(var(--foreground) / 0.8);
   pointer-events: none;
@@ -244,14 +245,14 @@
 
 .overlayDay {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 600;
   color: hsl(var(--foreground));
 }
 
 .overlayDistance {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   color: hsl(var(--accent));
 }
