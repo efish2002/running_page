@@ -19,6 +19,26 @@ const COLORS = {
   heartRate: 'hsl(var(--accent-2))',
 };
 
+const VO2_SERIES: ChartSeries[] = [
+  { name: 'VO2 max', color: COLORS.vo2, kind: 'line', fill: true },
+  { name: '30 日均线', color: COLORS.average, kind: 'line' },
+];
+
+const ENDURANCE_SERIES: ChartSeries[] = [
+  { name: '月里程 km', color: COLORS.endurance, kind: 'bar' },
+  { name: '有氧训练效应', color: COLORS.vo2, kind: 'line' },
+];
+
+const ALTITUDE_SERIES: ChartSeries[] = [
+  { name: '月爬升 m', color: COLORS.altitude, kind: 'bar' },
+  { name: '最高海拔 m', color: COLORS.vo2, kind: 'line' },
+];
+
+const LOAD_SERIES: ChartSeries[] = [
+  { name: '月训练负荷', color: COLORS.load, kind: 'bar' },
+  { name: '平均心率 bpm', color: COLORS.heartRate, kind: 'line' },
+];
+
 const round = (value: number, digits = 1) =>
   Number.isFinite(value) ? value.toFixed(digits) : '-';
 
@@ -171,23 +191,6 @@ const PhysiologyTrends = ({ activities, year }: PhysiologyTrendsProps) => {
     : 0;
   const vo2Delta = previousAverage ? averageVo2 - previousAverage : 0;
 
-  const vo2Series: ChartSeries[] = [
-    { name: 'VO2 max', color: COLORS.vo2, kind: 'line', fill: true },
-    { name: '30 日均线', color: COLORS.average, kind: 'line' },
-  ];
-  const enduranceSeries: ChartSeries[] = [
-    { name: '月里程 km', color: COLORS.endurance, kind: 'bar' },
-    { name: '有氧训练效应', color: COLORS.vo2, kind: 'line' },
-  ];
-  const altitudeSeries: ChartSeries[] = [
-    { name: '月爬升 m', color: COLORS.altitude, kind: 'bar' },
-    { name: '最高海拔 m', color: COLORS.vo2, kind: 'line' },
-  ];
-  const loadSeries: ChartSeries[] = [
-    { name: '月训练负荷', color: COLORS.load, kind: 'bar' },
-    { name: '平均心率 bpm', color: COLORS.heartRate, kind: 'line' },
-  ];
-
   if (!garminMetrics.length) {
     return (
       <Panel
@@ -217,7 +220,10 @@ const PhysiologyTrends = ({ activities, year }: PhysiologyTrendsProps) => {
             value: latestVo2 ? round(latestVo2.value) : '-',
             accent: true,
           },
-          { label: '年度峰值', value: peakVo2 ? round(peakVo2) : '-' },
+          {
+            label: year === 'Total' ? '历史峰值' : '年度峰值',
+            value: peakVo2 ? round(peakVo2) : '-',
+          },
           {
             label: '较上一年',
             value: previousAverage
@@ -232,7 +238,7 @@ const PhysiologyTrends = ({ activities, year }: PhysiologyTrendsProps) => {
       >
         <TrendChart
           points={vo2Points}
-          series={vo2Series}
+          series={VO2_SERIES}
           formatValue={(value) => `${round(value)} ml/kg/min`}
           formatAxis={(value) => round(value, 0)}
         />
@@ -259,11 +265,12 @@ const PhysiologyTrends = ({ activities, year }: PhysiologyTrendsProps) => {
       >
         <TrendChart
           points={endurancePoints}
-          series={enduranceSeries}
+          series={ENDURANCE_SERIES}
           formatValue={(value, index) =>
             index === 0 ? `${round(value)} km` : round(value, 2)
           }
           formatAxis={(value) => round(value, 0)}
+          formatAxisRight={(value) => round(value, 1)}
         />
       </Panel>
 
@@ -287,11 +294,12 @@ const PhysiologyTrends = ({ activities, year }: PhysiologyTrendsProps) => {
       >
         <TrendChart
           points={altitudePoints}
-          series={altitudeSeries}
+          series={ALTITUDE_SERIES}
           formatValue={(value, index) =>
             index === 0 ? `${Math.round(value)} m` : `${Math.round(value)} m`
           }
           formatAxis={(value) => round(value, 0)}
+          formatAxisRight={(value) => round(value, 0)}
         />
       </Panel>
 
@@ -318,11 +326,12 @@ const PhysiologyTrends = ({ activities, year }: PhysiologyTrendsProps) => {
       >
         <TrendChart
           points={loadPoints}
-          series={loadSeries}
+          series={LOAD_SERIES}
           formatValue={(value, index) =>
             index === 0 ? `${Math.round(value)}` : `${Math.round(value)} bpm`
           }
           formatAxis={(value) => round(value, 0)}
+          formatAxisRight={(value) => round(value, 0)}
         />
       </Panel>
       <p className={styles.source}>

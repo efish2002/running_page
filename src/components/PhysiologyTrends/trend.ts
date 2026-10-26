@@ -78,7 +78,10 @@ const sameRun = (activity: ActivityLike, metric: MetricLike): boolean => {
   ) {
     return true;
   }
-  const slack = Math.max(DISTANCE_SLACK, activity.distance * DISTANCE_TOLERANCE);
+  const slack = Math.max(
+    DISTANCE_SLACK,
+    activity.distance * DISTANCE_TOLERANCE
+  );
   return Math.abs(activity.distance - metric.distance) <= slack;
 };
 

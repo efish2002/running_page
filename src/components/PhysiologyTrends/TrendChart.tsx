@@ -19,10 +19,13 @@ interface TrendChartProps {
   series: ChartSeries[];
   formatValue?: (_value: number, _seriesIndex: number) => string;
   formatAxis?: (_value: number) => string;
+  formatAxisRight?: (_value: number) => string;
   height?: number;
 }
 
-const PAD = { top: 14, right: 12, bottom: 22, left: 42 };
+const PAD = { top: 14, bottom: 22, left: 42 };
+const PAD_RIGHT = 12;
+const PAD_RIGHT_SECOND_AXIS = 34;
 
 const defaultFormat = (value: number) =>
   Math.abs(value) >= 100 ? value.toFixed(0) : value.toFixed(1);
@@ -55,6 +58,7 @@ const TrendChart = ({
   series,
   formatValue = defaultFormat,
   formatAxis = defaultFormat,
+  formatAxisRight = defaultFormat,
   height = 210,
 }: TrendChartProps) => {
   const [hover, setHover] = useState<number | null>(null);
@@ -78,9 +82,6 @@ const TrendChart = ({
   }, []);
 
   const geometry = useMemo(() => {
-    const plotWidth = width - PAD.left - PAD.right;
-    const plotHeight = height - PAD.top - PAD.bottom;
-
     const positions = points.map((point, index) => point.x ?? index);
     const minX = Math.min(...positions);
     const maxX = Math.max(...positions);
@@ -101,6 +102,16 @@ const TrendChart = ({
       });
     });
 
+    // a bar and a line carry different units, the line needs its own axis
+    const secondAxis = barValues.length > 0 && lineValues.length > 0;
+    const pad = {
+      ...PAD,
+      right: secondAxis ? PAD_RIGHT_SECOND_AXIS : PAD_RIGHT,
+    };
+
+    const plotWidth = width - pad.left - pad.right;
+    const plotHeight = height - pad.top - pad.bottom;
+
     const rawBarScale = scaleOf(barValues.length ? barValues : [0]);
     const barScale = {
       min: Math.min(0, rawBarScale.min),
@@ -117,10 +128,10 @@ const TrendChart = ({
     // gutter of the axis labels
     const slot = plotWidth / Math.max(points.length, 1);
     const xOf = (position: number) =>
-      PAD.left + slot / 2 + ((position - minX) / spanX) * (plotWidth - slot);
+      pad.left + slot / 2 + ((position - minX) / spanX) * (plotWidth - slot);
 
     const yOf = (value: number, scale: { min: number; max: number }) =>
-      PAD.top +
+      pad.top +
       plotHeight -
       ((value - scale.min) / (scale.max - scale.min || 1)) * plotHeight;
 
@@ -176,21 +187,27 @@ const TrendChart = ({
             area.length > 1
               ? `${area.join(' ')} L ${xOf(
                   positions[positions.length - 1]
-                ).toFixed(1)},${(PAD.top + plotHeight).toFixed(1)} L ${xOf(
+                ).toFixed(1)},${(pad.top + plotHeight).toFixed(1)} L ${xOf(
                   positions[0]
-                ).toFixed(1)},${(PAD.top + plotHeight).toFixed(1)} Z`
+                ).toFixed(1)},${(pad.top + plotHeight).toFixed(1)} Z`
               : '',
         };
       });
 
     const grid = [0, 0.5, 1].map((step) => {
       const value = gridScale.min + (gridScale.max - gridScale.min) * step;
-      return { y: yOf(value, gridScale), label: formatAxis(value) };
+      const rightValue = lineScale.min + (lineScale.max - lineScale.min) * step;
+      return {
+        y: yOf(value, gridScale),
+        label: formatAxis(value),
+        rightLabel: secondAxis ? formatAxisRight(rightValue) : null,
+      };
     });
 
     const labelStep = Math.max(1, Math.ceil(points.length / 8));
 
     return {
+      pad,
       plotWidth,
       plotHeight,
       positions,
@@ -202,7 +219,7 @@ const TrendChart = ({
       barScale,
       lineScale,
     };
-  }, [points, series, height, formatAxis, width]);
+  }, [points, series, height, formatAxis, formatAxisRight, width]);
 
   if (!points.length) {
     return (
@@ -266,8 +283,8 @@ const TrendChart = ({
           <line
             key={line.y}
             className={styles.grid}
-            x1={PAD.left}
-            x2={width - PAD.right}
+            x1={geometry.pad.left}
+            x2={width - geometry.pad.right}
             y1={line.y}
             y2={line.y}
           />
@@ -315,8 +332,8 @@ const TrendChart = ({
             className={styles.guide}
             x1={guideX}
             x2={guideX}
-            y1={PAD.top}
-            y2={height - PAD.bottom}
+            y1={geometry.pad.top}
+            y2={height - geometry.pad.bottom}
           />
         )}
 
@@ -324,12 +341,26 @@ const TrendChart = ({
           <text
             key={line.y}
             className={styles.axisLabel}
-            x={PAD.left - 8}
+            x={geometry.pad.left - 8}
             y={line.y + 3}
           >
             {line.label}
           </text>
         ))}
+
+        {geometry.grid.map((line) =>
+          line.rightLabel === null ? null : (
+            <text
+              key={`right-${line.y}`}
+              className={styles.axisLabel}
+              x={width - geometry.pad.right + 8}
+              y={line.y + 3}
+              textAnchor="start"
+            >
+              {line.rightLabel}
+            </text>
+          )
+        )}
 
         {points.map((point, index) => {
           if (index % geometry.labelStep !== 0 && index !== points.length - 1) {
