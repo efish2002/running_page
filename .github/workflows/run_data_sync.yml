@@ -97,7 +97,6 @@ jobs:
             Workouts
             run_page/data.db
             src/static/activities.json
-            src/static/garmin_metrics.json
             run_page/garmin_metrics_cache.json
             imported.json
           key: ${{ env.DATA_CACHE_PREFIX }}-${{ github.sha }}-${{ github.run_id }}
@@ -186,6 +185,8 @@ jobs:
             echo "metrics unchanged"
           else
             git -c user.name="GitHub Action" -c user.email="action@github.com" commit -m "Refresh Garmin activity metrics"
+            # master may have moved on while the metrics were fetched
+            git pull --rebase origin master || echo "could not rebase the metrics"
             git push || echo "could not push the metrics"
           fi
 

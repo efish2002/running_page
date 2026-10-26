@@ -78,12 +78,16 @@ jobs:
             Workouts
             run_page/data.db
             src/static/activities.json
-            src/static/garmin_metrics.json
             imported.json
           key: ${{ inputs.data_cache_prefix || 'track_data_rebuild_1154' }}-${{ github.sha }}-${{ github.run_id }}
           restore-keys: |
             ${{ inputs.data_cache_prefix || 'track_data_rebuild_1154' }}-${{ github.sha }}-
             ${{ inputs.data_cache_prefix || 'track_data_rebuild_1154' }}-
+
+      - name: Take the Garmin metrics from the repository
+        # the sync commits the metrics to master, a cache restored from an older
+        # run must not overwrite them
+        run: git checkout -- src/static/garmin_metrics.json
 
       - name: Setup Node.js environment
         uses: actions/setup-node@v4
