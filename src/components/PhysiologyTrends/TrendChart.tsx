@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+} from 'react';
 import styles from './style.module.css';
 
 export interface ChartPoint {
@@ -12,11 +19,19 @@ export interface ChartSeries {
   color: string;
   kind: 'bar' | 'line';
   fill?: boolean;
+  width?: number;
+  opacity?: number;
+}
+
+export interface ChartTick {
+  index: number;
+  label: string;
 }
 
 interface TrendChartProps {
   points: ChartPoint[];
   series: ChartSeries[];
+  ticks?: ChartTick[];
   formatValue?: (_value: number, _seriesIndex: number) => string;
   formatAxis?: (_value: number) => string;
   formatAxisRight?: (_value: number) => string;
@@ -56,6 +71,7 @@ const withPadding = (scale: { min: number; max: number }) => {
 const TrendChart = ({
   points,
   series,
+  ticks,
   formatValue = defaultFormat,
   formatAxis = defaultFormat,
   formatAxisRight = defaultFormat,
@@ -64,6 +80,9 @@ const TrendChart = ({
   const [hover, setHover] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(600);
+  // every chart on the page needs its own gradient, the ids are shared
+  // across the whole document otherwise
+  const gradientId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
 
   // the svg is drawn in the size of its box, so the labels keep their shape
   useEffect(() => {
@@ -135,6 +154,26 @@ const TrendChart = ({
       plotHeight -
       ((value - scale.min) / (scale.max - scale.min || 1)) * plotHeight;
 
+    // the ticks that are handed in are thinned out, two of them must never
+    // touch each other
+    const visibleTicks = ticks?.length
+      ? ticks.reduce<ChartTick[]>((kept, tick) => {
+          const position = positions[tick.index];
+          if (position === undefined) {
+            return kept;
+          }
+          const last = kept[kept.length - 1];
+          const gap = last
+            ? xOf(position) - xOf(positions[last.index])
+            : Infinity;
+          if (gap < Math.max(26, tick.label.length * 5.6 + 6)) {
+            return kept;
+          }
+          kept.push(tick);
+          return kept;
+        }, [])
+      : null;
+
     const bars = series
       .map((item, index) => ({ item, index }))
       .filter((entry) => entry.item.kind === 'bar')
@@ -163,34 +202,51 @@ const TrendChart = ({
       .filter((entry) => entry.item.kind === 'line')
       .map((entry) => {
         const segments: string[] = [];
-        const area: string[] = [];
+        const areas: string[] = [];
+        const bottom = (pad.top + plotHeight).toFixed(1);
         let started = false;
+        let run: string[] = [];
+        let runStart = 0;
+        let runEnd = 0;
+
+        // the fill has to close every stretch on its own, a gap in the line
+        // must not be bridged by the shape underneath it
+        const closeRun = () => {
+          if (run.length > 1 && entry.item.fill) {
+            areas.push(
+              `${run.join(' ')} L ${runEnd.toFixed(1)},${bottom} L ${runStart.toFixed(
+                1
+              )},${bottom} Z`
+            );
+          }
+          run = [];
+        };
+
         points.forEach((point, pointIndex) => {
           const value = point.values[entry.index];
           if (!Number.isFinite(value)) {
+            closeRun();
             started = false;
             return;
           }
           const x = xOf(positions[pointIndex]);
           const y = yOf(value, lineScale);
-          segments.push(
-            `${started ? 'L' : 'M'} ${x.toFixed(1)},${y.toFixed(1)}`
-          );
-          area.push(`${started ? 'L' : 'M'} ${x.toFixed(1)},${y.toFixed(1)}`);
+          const command = `${started ? 'L' : 'M'} ${x.toFixed(1)},${y.toFixed(1)}`;
+          segments.push(command);
+          if (!run.length) {
+            runStart = x;
+          }
+          run.push(command);
+          runEnd = x;
           started = true;
         });
+        closeRun();
+
         return {
           item: entry.item,
           seriesIndex: entry.index,
           path: segments.join(' '),
-          area:
-            area.length > 1
-              ? `${area.join(' ')} L ${xOf(
-                  positions[positions.length - 1]
-                ).toFixed(1)},${(pad.top + plotHeight).toFixed(1)} L ${xOf(
-                  positions[0]
-                ).toFixed(1)},${(pad.top + plotHeight).toFixed(1)} Z`
-              : '',
+          areas,
         };
       });
 
@@ -216,10 +272,11 @@ const TrendChart = ({
       lines,
       grid,
       labelStep,
+      visibleTicks,
       barScale,
       lineScale,
     };
-  }, [points, series, height, formatAxis, formatAxisRight, width]);
+  }, [points, series, ticks, height, formatAxis, formatAxisRight, width]);
 
   if (!points.length) {
     return (
@@ -248,6 +305,16 @@ const TrendChart = ({
   const guideX = hover === null ? 0 : geometry.xOf(geometry.positions[hover]);
   const tooltipLeft = Math.min(Math.max((guideX / width) * 100, 12), 88);
 
+  // the ticks of the caller win, otherwise every n-th point is named
+  const axisLabels =
+    geometry.visibleTicks ??
+    points
+      .map((point, index) => ({ index, label: point.label }))
+      .filter(
+        (_, index) =>
+          index % geometry.labelStep === 0 || index === points.length - 1
+      );
+
   return (
     <div className={styles.chart} ref={containerRef}>
       <svg
@@ -266,7 +333,7 @@ const TrendChart = ({
             item.fill ? (
               <linearGradient
                 key={item.name}
-                id={`trend-fill-${index}`}
+                id={`trend-fill-${gradientId}-${index}`}
                 x1="0"
                 y1="0"
                 x2="0"
@@ -311,18 +378,23 @@ const TrendChart = ({
 
         {geometry.lines.map((line) => (
           <g key={line.item.name}>
-            {line.area && (
+            {line.areas.map((area, index) => (
               <path
-                d={line.area}
-                fill={`url(#trend-fill-${line.seriesIndex})`}
+                key={index}
+                d={area}
+                fill={`url(#trend-fill-${gradientId}-${line.seriesIndex})`}
                 stroke="none"
               />
-            )}
+            ))}
             <path
               className={styles.line}
               d={line.path}
               stroke={line.item.color}
               vectorEffect="non-scaling-stroke"
+              style={{
+                strokeWidth: line.item.width,
+                opacity: line.item.opacity,
+              }}
             />
           </g>
         ))}
@@ -362,22 +434,17 @@ const TrendChart = ({
           )
         )}
 
-        {points.map((point, index) => {
-          if (index % geometry.labelStep !== 0 && index !== points.length - 1) {
-            return null;
-          }
-          return (
-            <text
-              key={point.label + index}
-              className={styles.axisLabel}
-              x={geometry.xOf(geometry.positions[index])}
-              y={height - 6}
-              textAnchor="middle"
-            >
-              {point.label}
-            </text>
-          );
-        })}
+        {axisLabels.map((item) => (
+          <text
+            key={item.label + item.index}
+            className={styles.axisLabel}
+            x={geometry.xOf(geometry.positions[item.index])}
+            y={height - 6}
+            textAnchor="middle"
+          >
+            {item.label}
+          </text>
+        ))}
       </svg>
 
       {active && (

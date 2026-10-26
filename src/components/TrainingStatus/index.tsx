@@ -22,11 +22,14 @@ import {
   TONE_LABELS,
   TREND_LABELS,
   baselineBand,
+  dayAxis,
+  dayLabel,
+  dailyValues,
   inYear,
   latestOf,
   loadBalanceOf,
-  monthlyAverage,
-  monthLabel,
+  monthTicks,
+  movingAverage,
   readinessFactors,
   statusStrip,
   toneOf,
@@ -49,20 +52,66 @@ const COLORS = {
 };
 
 const READINESS_SERIES: ChartSeries[] = [
-  { name: '恢复力', color: COLORS.readiness, kind: 'line', fill: true },
+  {
+    name: '每日恢复力',
+    color: COLORS.readiness,
+    kind: 'line',
+    width: 1,
+    opacity: 0.3,
+  },
+  {
+    name: '7 日均线',
+    color: COLORS.readiness,
+    kind: 'line',
+    fill: true,
+    width: 2.2,
+  },
 ];
 
 const HRV_SERIES: ChartSeries[] = [
-  { name: '夜间 HRV', color: COLORS.hrv, kind: 'line', fill: true },
+  { name: '夜间 HRV', color: COLORS.hrv, kind: 'line', width: 1, opacity: 0.3 },
+  {
+    name: '7 日均线',
+    color: COLORS.hrv,
+    kind: 'line',
+    fill: true,
+    width: 2.2,
+  },
 ];
 
 const LOAD_SERIES: ChartSeries[] = [
-  { name: '短期负荷', color: COLORS.acute, kind: 'line' },
-  { name: '长期负荷', color: COLORS.chronic, kind: 'line' },
+  {
+    name: '短期负荷',
+    color: COLORS.acute,
+    kind: 'line',
+    width: 1,
+    opacity: 0.28,
+  },
+  { name: '短期负荷 7 日均', color: COLORS.acute, kind: 'line', width: 2.2 },
+  {
+    name: '长期负荷',
+    color: COLORS.chronic,
+    kind: 'line',
+    width: 1.6,
+    opacity: 0.9,
+  },
 ];
 
 const ALTITUDE_SERIES: ChartSeries[] = [
-  { name: '海拔适应', color: COLORS.altitude, kind: 'line', fill: true },
+  {
+    name: '每日适应',
+    color: COLORS.altitude,
+    kind: 'line',
+    width: 1,
+    opacity: 0.3,
+  },
+  {
+    name: '7 日均线',
+    color: COLORS.altitude,
+    kind: 'line',
+    fill: true,
+    width: 2.2,
+  },
 ];
 
 const FITNESS_TRENDS: Record<string, string> = {
@@ -113,53 +162,89 @@ const TrainingStatus = ({ year }: TrainingStatusProps) => {
   );
   const latestBalance = balances.length ? balances[balances.length - 1] : null;
 
-  const readinessMonths = useMemo(
-    () => monthlyAverage(readiness, year, (record) => record.score),
-    [readiness, year]
+  // every chart of the panel walks the same days, so they share one axis
+  const axis = useMemo(
+    () =>
+      dayAxis(
+        [
+          ...trainingStatus,
+          ...trainingReadiness,
+          ...trainingHrv,
+          ...trainingAcclimation,
+        ],
+        year
+      ),
+    [year]
   );
-  const hrvMonths = useMemo(
-    () => monthlyAverage(hrv, year, (record) => record.last_night_avg),
-    [hrv, year]
-  );
-  const acuteMonths = useMemo(
-    () => monthlyAverage(statusOfYear, year, (record) => record.acute_load),
-    [statusOfYear, year]
-  );
-  const chronicMonths = useMemo(
-    () => monthlyAverage(statusOfYear, year, (record) => record.chronic_load),
-    [statusOfYear, year]
-  );
-  const altitudeMonths = useMemo(
-    () => monthlyAverage(acclimation, year, (record) => record.altitude),
-    [acclimation, year]
+  const ticks = useMemo(
+    () => (axis ? monthTicks(axis, year) : undefined),
+    [axis, year]
   );
 
-  const readinessPoints: ChartPoint[] = readinessMonths.map((month, index) => ({
-    label: monthLabel(month.month, year),
-    values: [month.value ?? Number.NaN],
-    x: index,
-  }));
+  const readinessPoints: ChartPoint[] = useMemo(() => {
+    if (!axis) {
+      return [];
+    }
+    const days = dailyValues(readiness, axis, (record) => record.score);
+    const average = movingAverage(days.map((day) => day.value));
+    return days.map((day, index) => ({
+      label: dayLabel(day.date, year),
+      values: [day.value ?? Number.NaN, average[index] ?? Number.NaN],
+      x: index,
+    }));
+  }, [readiness, axis, year]);
 
-  const hrvPoints: ChartPoint[] = hrvMonths.map((month, index) => ({
-    label: monthLabel(month.month, year),
-    values: [month.value ?? Number.NaN],
-    x: index,
-  }));
+  const hrvPoints: ChartPoint[] = useMemo(() => {
+    if (!axis) {
+      return [];
+    }
+    const days = dailyValues(hrv, axis, (record) => record.last_night_avg);
+    const average = movingAverage(days.map((day) => day.value));
+    return days.map((day, index) => ({
+      label: dayLabel(day.date, year),
+      values: [day.value ?? Number.NaN, average[index] ?? Number.NaN],
+      x: index,
+    }));
+  }, [hrv, axis, year]);
 
-  const loadPoints: ChartPoint[] = acuteMonths.map((month, index) => ({
-    label: monthLabel(month.month, year),
-    values: [
-      month.value ?? Number.NaN,
-      chronicMonths[index]?.value ?? Number.NaN,
-    ],
-    x: index,
-  }));
+  const loadPoints: ChartPoint[] = useMemo(() => {
+    if (!axis) {
+      return [];
+    }
+    const acute = dailyValues(
+      statusOfYear,
+      axis,
+      (record) => record.acute_load
+    );
+    const chronic = dailyValues(
+      statusOfYear,
+      axis,
+      (record) => record.chronic_load
+    );
+    const average = movingAverage(acute.map((day) => day.value));
+    return acute.map((day, index) => ({
+      label: dayLabel(day.date, year),
+      values: [
+        day.value ?? Number.NaN,
+        average[index] ?? Number.NaN,
+        chronic[index]?.value ?? Number.NaN,
+      ],
+      x: index,
+    }));
+  }, [statusOfYear, axis, year]);
 
-  const altitudePoints: ChartPoint[] = altitudeMonths.map((month, index) => ({
-    label: monthLabel(month.month, year),
-    values: [month.value ?? Number.NaN],
-    x: index,
-  }));
+  const altitudePoints: ChartPoint[] = useMemo(() => {
+    if (!axis) {
+      return [];
+    }
+    const days = dailyValues(acclimation, axis, (record) => record.altitude);
+    const average = movingAverage(days.map((day) => day.value));
+    return days.map((day, index) => ({
+      label: dayLabel(day.date, year),
+      values: [day.value ?? Number.NaN, average[index] ?? Number.NaN],
+      x: index,
+    }));
+  }, [acclimation, axis, year]);
 
   const statusTone = toneOf(latestStatus?.phrase);
   const band = latestHrv ? baselineBand(latestHrv) : null;
@@ -253,6 +338,7 @@ const TrainingStatus = ({ year }: TrainingStatusProps) => {
         <TrendChart
           points={readinessPoints}
           series={READINESS_SERIES}
+          ticks={ticks}
           formatValue={(value) => `${Math.round(value)}`}
           formatAxis={(value) => round(value, 0)}
           height={170}
@@ -297,6 +383,7 @@ const TrainingStatus = ({ year }: TrainingStatusProps) => {
         <TrendChart
           points={hrvPoints}
           series={HRV_SERIES}
+          ticks={ticks}
           formatValue={(value) => `${Math.round(value)} ms`}
           formatAxis={(value) => round(value, 0)}
           height={170}
@@ -314,7 +401,7 @@ const TrainingStatus = ({ year }: TrainingStatusProps) => {
 
       <Panel
         eyebrow="load / 短期与长期负荷"
-        chip={`${acuteMonths.length} months`}
+        chip={`${statusOfYear.length} days`}
         stats={[
           {
             label: '短期负荷',
@@ -343,6 +430,7 @@ const TrainingStatus = ({ year }: TrainingStatusProps) => {
         <TrendChart
           points={loadPoints}
           series={LOAD_SERIES}
+          ticks={ticks}
           formatValue={(value) => `${Math.round(value)}`}
           formatAxis={(value) => round(value, 0)}
           formatAxisRight={(value) => round(value, 0)}
@@ -383,7 +471,7 @@ const TrainingStatus = ({ year }: TrainingStatusProps) => {
 
       <Panel
         eyebrow="altitude / 海拔适应"
-        chip={`${altitudeMonths.length} months`}
+        chip={`${acclimation.length} days`}
         stats={[
           {
             label: '当前适应',
@@ -418,6 +506,7 @@ const TrainingStatus = ({ year }: TrainingStatusProps) => {
         <TrendChart
           points={altitudePoints}
           series={ALTITUDE_SERIES}
+          ticks={ticks}
           formatValue={(value) => `${Math.round(value)} m`}
           formatAxis={(value) => round(value, 0)}
           height={170}

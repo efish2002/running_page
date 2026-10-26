@@ -173,44 +173,122 @@ export const toneOf = (phrase?: string | null): StatusTone => {
 export const inYear = (date: string, year: string): boolean =>
   year === 'Total' || (date || '').slice(0, 4) === year;
 
-export interface MonthPoint {
-  month: string;
+export interface DayAxis {
+  start: string;
+  end: string;
+}
+
+export interface DayValue {
+  date: string;
   value: number | null;
 }
 
+export interface Tick {
+  index: number;
+  label: string;
+}
+
+const DAY_MS = 86400000;
+
+const toUtc = (date: string) => Date.parse(`${date}T00:00:00Z`);
+
+export const shiftDay = (date: string, days: number): string =>
+  new Date(toUtc(date) + days * DAY_MS).toISOString().slice(0, 10);
+
+export const daySpan = (start: string, end: string): number =>
+  Math.max(0, Math.round((toUtc(end) - toUtc(start)) / DAY_MS));
+
 /**
- * The average of every day of the month, the days that carry no value are
- * left out.
+ * The calendar days the view covers. A single year starts on the first of
+ * January, the total view starts on the first day that carries a value.
  */
-export const monthlyAverage = <T extends { date: string }>(
+export const dayAxis = (
+  records: { date: string }[],
+  year: string
+): DayAxis | null => {
+  const dates = records
+    .map((record) => record?.date)
+    .filter((date): date is string => Boolean(date) && inYear(date, year))
+    .sort();
+  if (!dates.length) {
+    return null;
+  }
+  return {
+    start: year === 'Total' ? dates[0] : `${year}-01-01`,
+    end: dates[dates.length - 1],
+  };
+};
+
+/**
+ * One value for every day of the axis, the days without a value stay empty
+ * so that the line breaks there.
+ */
+export const dailyValues = <T extends { date: string }>(
   records: T[],
-  year: string,
+  axis: DayAxis,
   valueOf: (_record: T) => number | null | undefined
-): MonthPoint[] => {
-  const buckets = new Map<string, number[]>();
+): DayValue[] => {
+  const byDate = new Map<string, number>();
   records.forEach((record) => {
-    if (!record?.date || !inYear(record.date, year)) {
+    if (!record?.date) {
       return;
     }
     const value = valueOf(record);
     if (typeof value !== 'number' || !Number.isFinite(value)) {
       return;
     }
-    const month = record.date.slice(0, 7);
-    const list = buckets.get(month);
-    if (list) {
-      list.push(value);
-    } else {
-      buckets.set(month, [value]);
-    }
+    byDate.set(record.date, value);
   });
-  return [...buckets.entries()]
-    .sort((a, b) => (a[0] < b[0] ? -1 : 1))
-    .map(([month, values]) => ({
-      month,
-      value: values.reduce((sum, value) => sum + value, 0) / values.length,
-    }));
+  const total = daySpan(axis.start, axis.end);
+  const days: DayValue[] = [];
+  for (let index = 0; index <= total; index += 1) {
+    const date = shiftDay(axis.start, index);
+    days.push({ date, value: byDate.get(date) ?? null });
+  }
+  return days;
 };
+
+/**
+ * The average of the days that lead up to every point, the days without a
+ * value are left out.
+ */
+export const movingAverage = (
+  values: (number | null)[],
+  window = 7
+): (number | null)[] =>
+  values.map((_, index) => {
+    const slice = values.slice(Math.max(0, index - window + 1), index + 1);
+    const usable = slice.filter(
+      (value): value is number =>
+        typeof value === 'number' && Number.isFinite(value)
+    );
+    if (!usable.length) {
+      return null;
+    }
+    return usable.reduce((sum, value) => sum + value, 0) / usable.length;
+  });
+
+/**
+ * A tick for the first day of every month of the axis.
+ */
+export const monthTicks = (axis: DayAxis, year: string): Tick[] => {
+  const ticks: Tick[] = [];
+  const total = daySpan(axis.start, axis.end);
+  for (let index = 0; index <= total; index += 1) {
+    const date = shiftDay(axis.start, index);
+    if (index === 0 || date.endsWith('-01')) {
+      ticks.push({ index, label: monthLabel(date.slice(0, 7), year) });
+    }
+  }
+  return ticks;
+};
+
+/**
+ * The day of a point. The total view spans several years, so the date has to
+ * carry the year there.
+ */
+export const dayLabel = (date: string, year: string): string =>
+  year === 'Total' ? date : date.slice(5);
 
 export interface StripCell {
   date: string;

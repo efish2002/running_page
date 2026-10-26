@@ -8,11 +8,15 @@ import {
   TONE_LABELS,
   TREND_LABELS,
   baselineBand,
+  dayAxis,
+  dayLabel,
+  dailyValues,
   inYear,
   latestOf,
   loadBalanceOf,
-  monthlyAverage,
   monthLabel,
+  monthTicks,
+  movingAverage,
   readinessFactors,
   statusStrip,
   toneOf,
@@ -56,35 +60,97 @@ assert.equal(inYear('2026-03-02', '2026'), true);
 assert.equal(inYear('2025-03-02', '2026'), false);
 assert.equal(inYear('2025-03-02', 'Total'), true, 'the total view keeps it');
 
-// --- monthlyAverage -------------------------------------------------------
+// --- dayAxis ---------------------------------------------------------------
 
-const readiness = [
-  { date: '2026-03-01', score: 40 },
-  { date: '2026-03-15', score: 60 },
-  { date: '2026-04-02', score: 80 },
-  { date: '2025-12-31', score: 20 },
-];
-
-const months = monthlyAverage(readiness, '2026', (row) => row.score);
-assert.equal(months.length, 2, 'only the months of the year are kept');
-assert.equal(months[0].month, '2026-03');
-assert.equal(months[0].value, 50, 'the score of the month is averaged');
-assert.equal(months[1].month, '2026-04');
-assert.equal(months[1].value, 80);
-
-const totalMonths = monthlyAverage(readiness, 'Total', (row) => row.score);
-assert.equal(totalMonths.length, 3, 'the total view keeps every month');
-assert.equal(totalMonths[0].month, '2025-12');
-
-const withoutValue = monthlyAverage(
-  [{ date: '2026-03-01', score: null }],
-  '2026',
-  (row) => row.score
+const yearAxis = dayAxis(
+  [{ date: '2026-03-01' }, { date: '2026-04-02' }],
+  '2026'
 );
 assert.equal(
-  withoutValue.length,
-  0,
-  'a month without a value is not part of the trend'
+  yearAxis.start,
+  '2026-01-01',
+  'a year starts on the first of January'
+);
+assert.equal(yearAxis.end, '2026-04-02', 'a year ends on the last day it has');
+
+const totalAxis = dayAxis(
+  [{ date: '2025-12-31' }, { date: '2026-04-02' }],
+  'Total'
+);
+assert.equal(
+  totalAxis.start,
+  '2025-12-31',
+  'the total view starts at the first day it has'
+);
+assert.equal(totalAxis.end, '2026-04-02');
+
+assert.equal(
+  dayAxis([{ date: '2025-03-02' }], '2026'),
+  null,
+  'a year without a single day has no axis'
+);
+
+// --- dailyValues -----------------------------------------------------------
+
+const days = dailyValues(
+  [
+    { date: '2026-03-01', score: 40 },
+    { date: '2026-03-03', score: 60 },
+  ],
+  { start: '2026-03-01', end: '2026-03-03' },
+  (row) => row.score
+);
+assert.equal(days.length, 3, 'every day of the axis is a point');
+assert.equal(days[0].value, 40);
+assert.equal(days[1].value, null, 'a day without a value breaks the line');
+assert.equal(days[2].value, 60);
+
+const emptyDay = dailyValues(
+  [{ date: '2026-03-01', score: null }],
+  { start: '2026-03-01', end: '2026-03-01' },
+  (row) => row.score
+);
+assert.equal(emptyDay[0].value, null, 'a day without a reading is empty');
+
+// --- movingAverage ---------------------------------------------------------
+
+assert.deepEqual(
+  movingAverage([1, 2, 3, 4, 5, 6, 7], 3),
+  [1, 1.5, 2, 3, 4, 5, 6],
+  'the average looks back over the window'
+);
+assert.deepEqual(
+  movingAverage([null, 2, 3], 2),
+  [null, 2, 2.5],
+  'the days without a value are left out'
+);
+assert.deepEqual(movingAverage([null, null], 7), [null, null]);
+
+// --- monthTicks ------------------------------------------------------------
+
+const ticks = monthTicks({ start: '2026-01-01', end: '2026-03-05' }, '2026');
+assert.equal(ticks.length, 3, 'a tick for every month of the axis');
+assert.equal(ticks[0].index, 0);
+assert.equal(ticks[0].label, '01');
+assert.equal(ticks[1].label, '02');
+assert.equal(ticks[2].label, '03');
+
+const totalTicks = monthTicks(
+  { start: '2025-10-26', end: '2026-01-10' },
+  'Total'
+);
+assert.equal(totalTicks[0].label, '25-10', 'the total view names the year');
+assert.equal(totalTicks[1].label, '25-11');
+assert.equal(totalTicks[2].label, '25-12');
+assert.equal(totalTicks[3].label, '26-01');
+
+// --- dayLabel --------------------------------------------------------------
+
+assert.equal(dayLabel('2026-10-26', '2026'), '10-26');
+assert.equal(
+  dayLabel('2025-10-26', 'Total'),
+  '2025-10-26',
+  'the total view keeps the whole date'
 );
 
 // --- statusStrip ----------------------------------------------------------
