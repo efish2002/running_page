@@ -42,6 +42,20 @@ const LOAD_SERIES: ChartSeries[] = [
 const round = (value: number, digits = 1) =>
   Number.isFinite(value) ? value.toFixed(digits) : '-';
 
+const Legend = ({ series }: { series: ChartSeries[] }) => (
+  <ul className={styles.legend}>
+    {series.map((item) => (
+      <li key={item.name}>
+        <span
+          className={item.kind === 'bar' ? styles.legendBar : styles.legendLine}
+          style={{ background: item.color }}
+        />
+        {item.name}
+      </li>
+    ))}
+  </ul>
+);
+
 interface PanelProps {
   eyebrow: string;
   chip: string;
@@ -235,6 +249,7 @@ const PhysiologyTrends = ({ activities, year }: PhysiologyTrendsProps) => {
             value: latestVo2?.average ? round(latestVo2.average) : '-',
           },
         ]}
+        legend={<Legend series={VO2_SERIES} />}
       >
         <TrendChart
           points={vo2Points}
@@ -262,6 +277,7 @@ const PhysiologyTrends = ({ activities, year }: PhysiologyTrendsProps) => {
             value: aerobicList.length ? round(aerobicAverage, 2) : '-',
           },
         ]}
+        legend={<Legend series={ENDURANCE_SERIES} />}
       >
         <TrendChart
           points={endurancePoints}
@@ -291,6 +307,7 @@ const PhysiologyTrends = ({ activities, year }: PhysiologyTrendsProps) => {
               : '-',
           },
         ]}
+        legend={<Legend series={ALTITUDE_SERIES} />}
       >
         <TrendChart
           points={altitudePoints}
@@ -323,6 +340,7 @@ const PhysiologyTrends = ({ activities, year }: PhysiologyTrendsProps) => {
               : '-',
           },
         ]}
+        legend={<Legend series={LOAD_SERIES} />}
       >
         <TrendChart
           points={loadPoints}

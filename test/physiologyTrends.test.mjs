@@ -5,12 +5,13 @@ import {
   vo2Trend,
 } from '../src/components/PhysiologyTrends/trend.ts';
 
-const activity = (run_id, distance, start_date_local, start_date) => ({
+const activity = (run_id, distance, start_date_local, start_date, name = '') => ({
   run_id,
   distance,
   moving_time: '0:30:00',
   start_date,
   start_date_local,
+  name,
 });
 
 const metric = (start_date, extra = {}) => ({
@@ -74,6 +75,72 @@ const sameLength = matchMetrics(
   [metric('2026-06-01 23:10:00', { vo2_max: 51, distance: 5010 })]
 );
 assert.equal(sameLength.size, 1, 'a metric of the same run is a match');
+
+// a run keeps the metric that starts closest, a later one never replaces it
+const twoCandidates = matchMetrics(
+  [activity(14, 8000, '2026-07-02 07:10:00', '2026-07-01 23:10:00')],
+  [
+    metric('2026-07-01 23:11:00', { vo2_max: 51 }),
+    metric('2026-07-01 23:40:00', { vo2_max: 52 }),
+  ]
+);
+assert.equal(twoCandidates.size, 1, 'a run takes one metric only');
+assert.equal(
+  twoCandidates.get(14).vo2_max,
+  51,
+  'the metric that starts closest is kept'
+);
+
+// the track of a run can be shorter than the run garmin recorded, the name
+// tells them apart
+const shorterTrack = matchMetrics(
+  [
+    activity(
+      15,
+      3355,
+      '2026-08-01 07:10:13',
+      '2026-07-31 23:10:13',
+      '成都市 跑步'
+    ),
+  ],
+  [
+    metric('2026-07-31 22:53:08', {
+      vo2_max: 54,
+      distance: 6400,
+      name: '成都市 跑步',
+    }),
+  ]
+);
+assert.equal(
+  shorterTrack.size,
+  1,
+  'a metric of the same run is a match even when the track is shorter'
+);
+
+// a metric of another run on the same day is not a match
+const otherRun = matchMetrics(
+  [
+    activity(
+      16,
+      3355,
+      '2026-08-01 07:10:13',
+      '2026-07-31 23:10:13',
+      '成都市 跑步'
+    ),
+  ],
+  [
+    metric('2026-07-31 22:53:08', {
+      vo2_max: 54,
+      distance: 6400,
+      name: '武汉市 跑步',
+    }),
+  ]
+);
+assert.equal(
+  otherRun.size,
+  0,
+  'a metric that carries another name is not a match'
+);
 
 // --- monthBuckets --------------------------------------------------------
 

@@ -20,6 +20,7 @@ export interface MetricLike {
 
 export interface ActivityLike {
   run_id: number;
+  name?: string;
   distance: number;
   moving_time: string;
   start_date: string;
@@ -86,11 +87,31 @@ const sameRun = (activity: ActivityLike, metric: MetricLike): boolean => {
 };
 
 /**
+ * Garmin names a run after the place it started in, so two activities that
+ * carry the same name are the same run. The name is what identifies a run
+ * when the recorded track is shorter than the activity Garmin measured.
+ */
+const sameName = (activity: ActivityLike, metric: MetricLike): boolean =>
+  typeof activity.name === 'string' &&
+  activity.name.length > 0 &&
+  activity.name === metric.name;
+
+const shiftDay = (day: string, offset: number): string => {
+  const time = Date.parse(`${day}T00:00:00Z`);
+  if (Number.isNaN(time)) {
+    return day;
+  }
+  return new Date(time + offset * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+};
+
+/**
  * Garmin records the start of an activity a few seconds apart from the first
  * point of the track, so a metric belongs to the activity that starts closest
- * to it on the same day. A metric is given to one activity only and the
- * length of the run has to agree, otherwise the metric belongs to another run
- * of the same day.
+ * to it on the same day. A metric is given to one activity only and the run
+ * has to be the same one, either because the names agree or because the
+ * length of the track agrees.
  */
 export const matchMetrics = (
   activities: ActivityLike[],
@@ -119,30 +140,43 @@ export const matchMetrics = (
     if (typeof activity.start_date !== 'string') {
       return;
     }
-    const candidates = byDay.get(activity.start_date.slice(0, 10));
-    if (!candidates) {
-      return;
-    }
+    const day = activity.start_date.slice(0, 10);
     const target = parseUtc(activity.start_date);
-    candidates.forEach((index) => {
-      const candidate = metrics[index];
-      const gap = Math.abs(parseUtc(candidate.start_date) - target);
-      if (gap > MATCH_WINDOW_MS || !sameRun(activity, candidate)) {
+    // a run that starts at night may cross midnight, so the neighbours count
+    [-1, 0, 1].forEach((offset) => {
+      const candidates = byDay.get(shiftDay(day, offset));
+      if (!candidates) {
         return;
       }
-      pairs.push({ activity, metric: candidate, gap });
+      candidates.forEach((index) => {
+        const candidate = metrics[index];
+        const gap = Math.abs(parseUtc(candidate.start_date) - target);
+        if (gap > MATCH_WINDOW_MS) {
+          return;
+        }
+        if (!sameName(activity, candidate) && !sameRun(activity, candidate)) {
+          return;
+        }
+        pairs.push({ activity, metric: candidate, gap });
+      });
     });
   });
 
   pairs.sort((a, b) => a.gap - b.gap);
 
   const matched = new Map<number, MetricLike>();
-  const taken = new Set<MetricLike>();
+  const takenMetrics = new Set<MetricLike>();
+  const takenActivities = new Set<number>();
   pairs.forEach((pair) => {
-    if (taken.has(pair.metric)) {
+    // a metric belongs to one run and a run keeps the metric that fits best
+    if (
+      takenMetrics.has(pair.metric) ||
+      takenActivities.has(pair.activity.run_id)
+    ) {
       return;
     }
-    taken.add(pair.metric);
+    takenMetrics.add(pair.metric);
+    takenActivities.add(pair.activity.run_id);
     matched.set(pair.activity.run_id, pair.metric);
   });
   return matched;
