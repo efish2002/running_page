@@ -7,6 +7,7 @@ import PhysiologyTrends from '@/components/PhysiologyTrends';
 import RunMap from '@/components/RunMap';
 import RunTable from '@/components/RunTable';
 import SVGStat from '@/components/SVGStat';
+import TrainingStatus from '@/components/TrainingStatus';
 import YearsStat from '@/components/YearsStat';
 import useActivities from '@/hooks/useActivities';
 import useSiteMetadata from '@/hooks/useSiteMetadata';
@@ -218,6 +219,7 @@ const Index = () => {
           onSelectRuns={locateActivity}
         />
         <PhysiologyTrends activities={activities} year={year} />
+        <TrainingStatus year={year} />
         {year === 'Total' ? (
           <SVGStat />
         ) : (

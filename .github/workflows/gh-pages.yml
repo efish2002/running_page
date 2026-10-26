@@ -87,7 +87,7 @@ jobs:
       - name: Take the Garmin metrics from the repository
         # the sync commits the metrics to master, a cache restored from an older
         # run must not overwrite them
-        run: git checkout -- src/static/garmin_metrics.json
+        run: git checkout -- src/static/garmin_metrics.json src/static/garmin_training.json
 
       - name: Setup Node.js environment
         uses: actions/setup-node@v4

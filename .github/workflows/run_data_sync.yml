@@ -12,6 +12,7 @@ on:
           - garmin_cn
           - garmin_fit
           - garmin_metrics
+          - garmin_training
           - only_gpx
           - only_fit
   schedule:
@@ -25,6 +26,8 @@ on:
       - run_page/strava_sync.py
       - run_page/gen_svg.py
       - run_page/garmin_sync.py
+      - run_page/garmin_metrics_sync.py
+      - run_page/garmin_training_sync.py
       - run_page/coros_sync.py
       - run_page/keep_sync.py
       - run_page/gpx_sync.py
@@ -98,6 +101,7 @@ jobs:
             run_page/data.db
             src/static/activities.json
             run_page/garmin_metrics_cache.json
+            run_page/garmin_training_cache.json
             imported.json
           key: ${{ env.DATA_CACHE_PREFIX }}-${{ github.sha }}-${{ github.run_id }}
           restore-keys: |
@@ -188,6 +192,25 @@ jobs:
             # master may have moved on while the metrics were fetched
             git pull --rebase origin master || echo "could not rebase the metrics"
             git push || echo "could not push the metrics"
+          fi
+
+      - name: Run sync Garmin training status script
+        if: env.RUN_TYPE == 'garmin_cn' || env.RUN_TYPE == 'garmin_fit' || env.RUN_TYPE == 'garmin_metrics' || env.RUN_TYPE == 'garmin_training'
+        run: |
+          # pulls the training status, the readiness, the hrv and the acclimation
+          python run_page/garmin_training_sync.py ${{ secrets.GARMIN_SECRET_STRING_CN }} --is-cn
+
+      - name: Commit Garmin training status
+        if: env.RUN_TYPE == 'garmin_cn' || env.RUN_TYPE == 'garmin_fit' || env.RUN_TYPE == 'garmin_metrics' || env.RUN_TYPE == 'garmin_training'
+        run: |
+          git add src/static/garmin_training.json
+          if git diff --cached --quiet; then
+            echo "training status unchanged"
+          else
+            git -c user.name="GitHub Action" -c user.email="action@github.com" commit -m "Refresh Garmin training status"
+            # master may have moved on while the training status was fetched
+            git pull --rebase origin master || echo "could not rebase the training status"
+            git push || echo "could not push the training status"
           fi
 
 

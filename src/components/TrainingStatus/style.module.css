@@ -1,0 +1,184 @@
+.stripWrap {
+  position: relative;
+  padding-top: 0.9rem;
+}
+
+.strip {
+  display: flex;
+  gap: 0;
+  height: 28px;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+.cell {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+}
+
+.ruler {
+  position: relative;
+  height: 14px;
+  margin-top: 0.25rem;
+}
+
+.tick {
+  position: absolute;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: hsl(var(--subtle));
+}
+
+.tip {
+  position: absolute;
+  top: -0.35rem;
+  transform: translateX(-50%);
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+  border: 1px solid hsl(var(--line) / 0.2);
+  background: hsl(222 60% 6% / 0.94);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  color: hsl(var(--foreground));
+  pointer-events: none;
+  z-index: 4;
+}
+
+.range {
+  display: grid;
+  grid-template-columns: 4.2rem 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0;
+}
+
+.rangeLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: hsl(var(--muted));
+}
+
+.rangeTrack {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: hsl(var(--line) / 0.1);
+}
+
+.rangeZone {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: hsl(var(--good) / 0.28);
+}
+
+.rangeValue {
+  position: absolute;
+  top: -3px;
+  width: 3px;
+  height: 14px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  box-shadow: 0 0 8px hsl(var(--accent) / 0.55);
+}
+
+.rangeText {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: hsl(var(--foreground));
+  white-space: nowrap;
+}
+
+.rangeText em {
+  font-style: normal;
+  color: hsl(var(--subtle));
+}
+
+.factors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.5rem 1.1rem;
+  margin: 0.9rem 0 0;
+  padding: 0.9rem 0 0;
+  border-top: 1px solid hsl(var(--line) / 0.08);
+  list-style: none;
+}
+
+.factors li {
+  display: grid;
+  grid-template-columns: 2.6rem 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.factorLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: hsl(var(--muted));
+}
+
+.factorTrack {
+  height: 5px;
+  border-radius: 999px;
+  background: hsl(var(--line) / 0.1);
+  overflow: hidden;
+}
+
+.factorFill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, hsl(var(--accent-2)), hsl(var(--accent)));
+}
+
+.factorValue {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: hsl(var(--foreground));
+}
+
+.balance {
+  margin-top: 0.9rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid hsl(var(--line) / 0.08);
+}
+
+.balanceTitle {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: hsl(var(--subtle));
+  padding-bottom: 0.3rem;
+}
+
+.note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: hsl(var(--muted));
+}
+
+.note b {
+  color: hsl(var(--accent));
+  font-weight: 600;
+}
+
+.source {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: hsl(var(--subtle));
+}

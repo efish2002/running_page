@@ -1,6 +1,7 @@
-import { ReactNode, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Activity } from '@/utils/utils';
 import { garminMetrics, garminMetricsUpdatedAt } from '@/utils/garminMetrics';
+import { Legend, Panel } from '@/components/Panel';
 import { monthBuckets, vo2Trend } from './trend';
 import TrendChart, { ChartPoint, ChartSeries } from './TrendChart';
 import styles from './style.module.css';
@@ -41,58 +42,6 @@ const LOAD_SERIES: ChartSeries[] = [
 
 const round = (value: number, digits = 1) =>
   Number.isFinite(value) ? value.toFixed(digits) : '-';
-
-const Legend = ({ series }: { series: ChartSeries[] }) => (
-  <ul className={styles.legend}>
-    {series.map((item) => (
-      <li key={item.name}>
-        <span
-          className={item.kind === 'bar' ? styles.legendBar : styles.legendLine}
-          style={{ background: item.color }}
-        />
-        {item.name}
-      </li>
-    ))}
-  </ul>
-);
-
-interface PanelProps {
-  eyebrow: string;
-  chip: string;
-  stats: Array<{ label: string; value: string; accent?: boolean }>;
-  legend?: ReactNode;
-  children: ReactNode;
-}
-
-const Panel = ({ eyebrow, chip, stats, legend, children }: PanelProps) => (
-  <section className={`panel panel-bracket ${styles.panel}`}>
-    <header className="panel-header">
-      <span className="eyebrow">
-        <span className="status-dot" />
-        {eyebrow}
-      </span>
-      <span className="chip">{chip}</span>
-    </header>
-    <div className={styles.body}>
-      <div className={styles.stats}>
-        {stats.map((stat) => (
-          <div key={stat.label} className={styles.stat}>
-            <span className="metric-label">{stat.label}</span>
-            <span
-              className={`metric-value ${
-                stat.accent ? 'metric-value-accent' : ''
-              }`}
-            >
-              {stat.value}
-            </span>
-          </div>
-        ))}
-      </div>
-      {legend}
-      {children}
-    </div>
-  </section>
-);
 
 const PhysiologyTrends = ({ activities, year }: PhysiologyTrendsProps) => {
   const buckets = useMemo(
@@ -291,7 +240,7 @@ const PhysiologyTrends = ({ activities, year }: PhysiologyTrendsProps) => {
       </Panel>
 
       <Panel
-        eyebrow="altitude / 海拔适应"
+        eyebrow="altitude / 海拔爬升"
         chip={`${Math.round(totalGain)} m`}
         stats={[
           {

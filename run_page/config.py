@@ -20,6 +20,8 @@ SQL_FILE = os.path.join(parent, "run_page", "data.db")
 JSON_FILE = os.path.join(parent, "src", "static", "activities.json")
 GARMIN_METRICS_FILE = os.path.join(parent, "src", "static", "garmin_metrics.json")
 GARMIN_METRICS_CACHE = os.path.join(parent, "run_page", "garmin_metrics_cache.json")
+GARMIN_TRAINING_FILE = os.path.join(parent, "src", "static", "garmin_training.json")
+GARMIN_TRAINING_CACHE = os.path.join(parent, "run_page", "garmin_training_cache.json")
 SYNCED_FILE = os.path.join(parent, "imported.json")
 SYNCED_ACTIVITY_FILE = os.path.join(parent, "synced_activity.json")
 
