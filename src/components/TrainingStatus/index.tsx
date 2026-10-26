@@ -26,6 +26,7 @@ import {
   latestOf,
   loadBalanceOf,
   monthlyAverage,
+  monthLabel,
   readinessFactors,
   statusStrip,
   toneOf,
@@ -134,19 +135,19 @@ const TrainingStatus = ({ year }: TrainingStatusProps) => {
   );
 
   const readinessPoints: ChartPoint[] = readinessMonths.map((month, index) => ({
-    label: month.month.slice(5),
+    label: monthLabel(month.month, year),
     values: [month.value ?? Number.NaN],
     x: index,
   }));
 
   const hrvPoints: ChartPoint[] = hrvMonths.map((month, index) => ({
-    label: month.month.slice(5),
+    label: monthLabel(month.month, year),
     values: [month.value ?? Number.NaN],
     x: index,
   }));
 
   const loadPoints: ChartPoint[] = acuteMonths.map((month, index) => ({
-    label: month.month.slice(5),
+    label: monthLabel(month.month, year),
     values: [
       month.value ?? Number.NaN,
       chronicMonths[index]?.value ?? Number.NaN,
@@ -155,7 +156,7 @@ const TrainingStatus = ({ year }: TrainingStatusProps) => {
   }));
 
   const altitudePoints: ChartPoint[] = altitudeMonths.map((month, index) => ({
-    label: month.month.slice(5),
+    label: monthLabel(month.month, year),
     values: [month.value ?? Number.NaN],
     x: index,
   }));
@@ -218,7 +219,7 @@ const TrainingStatus = ({ year }: TrainingStatusProps) => {
           },
         ]}
       >
-        <StatusStrip cells={cells} />
+        <StatusStrip cells={cells} year={year} />
       </Panel>
 
       <Panel

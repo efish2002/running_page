@@ -4,13 +4,14 @@ import styles from './style.module.css';
 
 interface StatusStripProps {
   cells: StripCell[];
+  year: string;
 }
 
 /**
  * One cell for every day of the year, the colour of the cell is the level the
  * training was in on that day.
  */
-const StatusStrip = ({ cells }: StatusStripProps) => {
+const StatusStrip = ({ cells, year }: StatusStripProps) => {
   const [hover, setHover] = useState<number | null>(null);
 
   if (!cells.length) {
@@ -38,6 +39,15 @@ const StatusStrip = ({ cells }: StatusStripProps) => {
 
   const active = hover === null ? null : cells[hover];
 
+  // the total view crosses a year, the year is written where the year turns
+  const tickLabel = (month: string, index: number) => {
+    if (year !== 'Total') {
+      return month.slice(5);
+    }
+    const opensAYear = month.endsWith('-01') && index > 0;
+    return opensAYear ? month.slice(2) : month.slice(5);
+  };
+
   return (
     <div className={styles.stripWrap}>
       <div
@@ -59,13 +69,13 @@ const StatusStrip = ({ cells }: StatusStripProps) => {
         ))}
       </div>
       <div className={styles.ruler}>
-        {ticks.map((tick) => (
+        {ticks.map((tick, index) => (
           <span
             key={`${tick.month}-${tick.index}`}
             className={styles.tick}
             style={{ left: `${(tick.index / cells.length) * 100}%` }}
           >
-            {tick.month.slice(5)}
+            {tickLabel(tick.month, index)}
           </span>
         ))}
       </div>

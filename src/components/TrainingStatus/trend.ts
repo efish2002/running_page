@@ -219,6 +219,13 @@ export interface StripCell {
 }
 
 /**
+ * The month of a point on the axis. The total view holds two octobers, so the
+ * year has to be part of the label there.
+ */
+export const monthLabel = (month: string, year: string): string =>
+  year === 'Total' ? month.slice(2) : month.slice(5);
+
+/**
  * One cell for every day of the year, the cell carries the level of the day.
  */
 export const statusStrip = (

@@ -12,6 +12,7 @@ import {
   latestOf,
   loadBalanceOf,
   monthlyAverage,
+  monthLabel,
   readinessFactors,
   statusStrip,
   toneOf,
@@ -184,5 +185,21 @@ assert.equal(ACWR_LABELS.OPTIMAL, '最佳');
 assert.equal(ACWR_LABELS.LOW, '偏低');
 assert.equal(ACWR_LABELS.HIGH, '偏高');
 assert.equal(ACWR_LABELS.VERY_HIGH, '极高');
+
+// --- monthLabel -----------------------------------------------------------
+
+assert.equal(
+  monthLabel('2026-01', '2026'),
+  '01',
+  'a single year shows the month'
+);
+assert.equal(monthLabel('2026-10', '2026'), '10');
+
+assert.equal(
+  monthLabel('2025-10', 'Total'),
+  '25-10',
+  'the total view has two octobers, so the year has to be there'
+);
+assert.equal(monthLabel('2026-10', 'Total'), '26-10');
 
 console.log('training status tests passed');
