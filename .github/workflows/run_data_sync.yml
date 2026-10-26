@@ -96,6 +96,8 @@ jobs:
             Workouts
             run_page/data.db
             src/static/activities.json
+            src/static/garmin_metrics.json
+            run_page/garmin_metrics_cache.json
             imported.json
           key: ${{ env.DATA_CACHE_PREFIX }}-${{ github.sha }}-${{ github.run_id }}
           restore-keys: |
@@ -168,6 +170,23 @@ jobs:
         run: |
           # Garmin cannot export activities longer than 8 hours as GPX, this pulls the .fit instead
           python run_page/garmin_fit_sync.py ${{ secrets.GARMIN_SECRET_STRING_CN }} --only-run --is-cn
+
+      - name: Run sync Garmin activity metrics script
+        if: env.RUN_TYPE == 'garmin_cn' || env.RUN_TYPE == 'garmin_fit'
+        run: |
+          # pulls the physiological metrics Garmin records for every activity
+          python run_page/garmin_metrics_sync.py ${{ secrets.GARMIN_SECRET_STRING_CN }} --is-cn
+
+      - name: Commit Garmin activity metrics
+        if: env.RUN_TYPE == 'garmin_cn' || env.RUN_TYPE == 'garmin_fit'
+        run: |
+          git add src/static/garmin_metrics.json
+          if git diff --cached --quiet; then
+            echo "metrics unchanged"
+          else
+            git -c user.name="GitHub Action" -c user.email="action@github.com" commit -m "Refresh Garmin activity metrics"
+            git push || echo "could not push the metrics"
+          fi
 
 
 

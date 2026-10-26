@@ -78,6 +78,7 @@ jobs:
             Workouts
             run_page/data.db
             src/static/activities.json
+            src/static/garmin_metrics.json
             imported.json
           key: ${{ inputs.data_cache_prefix || 'track_data_rebuild_1154' }}-${{ github.sha }}-${{ github.run_id }}
           restore-keys: |
