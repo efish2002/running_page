@@ -37,6 +37,15 @@ def as_float(value):
     return round(number, 2)
 
 
+def as_date(value):
+    """A day as a plain string, the json file cannot hold a date object."""
+    if isinstance(value, datetime):
+        return value.date().isoformat()
+    if isinstance(value, date):
+        return value.isoformat()
+    return value
+
+
 def days_between(start, end):
     """Every day from start to end, both of them included."""
     day = start
@@ -104,7 +113,7 @@ def status_record(day, payload):
         return None
     load = record.get("acuteTrainingLoadDTO") or {}
     return {
-        "date": day,
+        "date": as_date(day),
         "status": as_float(record.get("trainingStatus")),
         "phrase": str(record.get("trainingStatusFeedbackPhrase") or ""),
         "fitness_trend": as_float(record.get("fitnessTrend")),
@@ -192,7 +201,7 @@ def load_balance_record(day, payload):
         if not isinstance(value, dict):
             continue
         return {
-            "date": value.get("calendarDate") or day,
+            "date": as_date(value.get("calendarDate") or day),
             "month": day.strftime("%Y-%m"),
             "aerobic_low": as_float(value.get("monthlyLoadAerobicLow")),
             "aerobic_high": as_float(value.get("monthlyLoadAerobicHigh")),
@@ -319,8 +328,8 @@ async def collect(client, cache, refresh, days):
     vo2 = [row for row in vo2 if row]
     print(f"vo2 max rows: {len(vo2)}")
 
-    status_cache = cache.get("status") or {}
-    load_balance_cache = cache.get("load_balance") or {}
+    status_cache = cache.setdefault("status", {})
+    load_balance_cache = cache.setdefault("load_balance", {})
 
     semaphore = asyncio.Semaphore(CONCURRENCY)
 
