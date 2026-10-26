@@ -113,8 +113,11 @@ const TrendChart = ({
       ? barScale
       : lineScale;
 
+    // every point sits in the middle of its slot, so a bar never reaches the
+    // gutter of the axis labels
+    const slot = plotWidth / Math.max(points.length, 1);
     const xOf = (position: number) =>
-      PAD.left + ((position - minX) / spanX) * plotWidth;
+      PAD.left + slot / 2 + ((position - minX) / spanX) * (plotWidth - slot);
 
     const yOf = (value: number, scale: { min: number; max: number }) =>
       PAD.top +
@@ -125,7 +128,6 @@ const TrendChart = ({
       .map((item, index) => ({ item, index }))
       .filter((entry) => entry.item.kind === 'bar')
       .map((entry) => {
-        const slot = plotWidth / Math.max(points.length, 1);
         return points.map((point, pointIndex) => {
           const value = point.values[entry.index];
           const x = xOf(positions[pointIndex]) - slot * 0.3;
@@ -261,18 +263,14 @@ const TrendChart = ({
         </defs>
 
         {geometry.grid.map((line) => (
-          <g key={line.y}>
-            <line
-              className={styles.grid}
-              x1={PAD.left}
-              x2={width - PAD.right}
-              y1={line.y}
-              y2={line.y}
-            />
-            <text className={styles.axisLabel} x={PAD.left - 8} y={line.y + 3}>
-              {line.label}
-            </text>
-          </g>
+          <line
+            key={line.y}
+            className={styles.grid}
+            x1={PAD.left}
+            x2={width - PAD.right}
+            y1={line.y}
+            y2={line.y}
+          />
         ))}
 
         {geometry.bars.map((bars, seriesIndex) => (
@@ -321,6 +319,17 @@ const TrendChart = ({
             y2={height - PAD.bottom}
           />
         )}
+
+        {geometry.grid.map((line) => (
+          <text
+            key={line.y}
+            className={styles.axisLabel}
+            x={PAD.left - 8}
+            y={line.y + 3}
+          >
+            {line.label}
+          </text>
+        ))}
 
         {points.map((point, index) => {
           if (index % geometry.labelStep !== 0 && index !== points.length - 1) {

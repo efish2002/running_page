@@ -15,6 +15,8 @@ const COLORS = {
   average: 'hsl(var(--accent-2))',
   endurance: 'hsl(var(--accent-2))',
   altitude: 'hsl(var(--signal))',
+  load: 'hsl(var(--accent))',
+  heartRate: 'hsl(var(--accent-2))',
 };
 
 const round = (value: number, digits = 1) =>
@@ -111,6 +113,16 @@ const PhysiologyTrends = ({ activities, year }: PhysiologyTrendsProps) => {
     [buckets]
   );
 
+  const loadPoints: ChartPoint[] = useMemo(
+    () =>
+      buckets.map((bucket, index) => ({
+        label: bucket.month.slice(2),
+        values: [bucket.trainingLoad ?? Number.NaN, bucket.avgHr ?? Number.NaN],
+        x: index,
+      })),
+    [buckets]
+  );
+
   const totalDistance = buckets.reduce(
     (sum, bucket) => sum + bucket.distance,
     0
@@ -132,6 +144,20 @@ const PhysiologyTrends = ({ activities, year }: PhysiologyTrendsProps) => {
     .filter((value): value is number => value !== null);
   const aerobicAverage = aerobicList.length
     ? aerobicList.reduce((sum, value) => sum + value, 0) / aerobicList.length
+    : 0;
+  const loadList = buckets
+    .map((bucket) => bucket.trainingLoad)
+    .filter((value): value is number => value !== null);
+  const loadAverage = loadList.length
+    ? loadList.reduce((sum, value) => sum + value, 0) / loadList.length
+    : 0;
+  const loadPeak = loadList.reduce((max, value) => Math.max(max, value), 0);
+  const heartRateList = buckets
+    .map((bucket) => bucket.avgHr)
+    .filter((value): value is number => value !== null);
+  const heartRateAverage = heartRateList.length
+    ? heartRateList.reduce((sum, value) => sum + value, 0) /
+      heartRateList.length
     : 0;
 
   const latestVo2 = vo2.length ? vo2[vo2.length - 1] : null;
@@ -156,6 +182,10 @@ const PhysiologyTrends = ({ activities, year }: PhysiologyTrendsProps) => {
   const altitudeSeries: ChartSeries[] = [
     { name: '月爬升 m', color: COLORS.altitude, kind: 'bar' },
     { name: '最高海拔 m', color: COLORS.vo2, kind: 'line' },
+  ];
+  const loadSeries: ChartSeries[] = [
+    { name: '月训练负荷', color: COLORS.load, kind: 'bar' },
+    { name: '平均心率 bpm', color: COLORS.heartRate, kind: 'line' },
   ];
 
   if (!garminMetrics.length) {
@@ -260,6 +290,37 @@ const PhysiologyTrends = ({ activities, year }: PhysiologyTrendsProps) => {
           series={altitudeSeries}
           formatValue={(value, index) =>
             index === 0 ? `${Math.round(value)} m` : `${Math.round(value)} m`
+          }
+          formatAxis={(value) => round(value, 0)}
+        />
+      </Panel>
+
+      <Panel
+        eyebrow="load / 训练负荷"
+        chip={`${Math.round(loadAverage)} / 月`}
+        stats={[
+          {
+            label: '平均月负荷',
+            value: loadList.length ? `${Math.round(loadAverage)}` : '-',
+            accent: true,
+          },
+          {
+            label: '峰值月负荷',
+            value: loadPeak ? `${Math.round(loadPeak)}` : '-',
+          },
+          {
+            label: '平均心率',
+            value: heartRateList.length
+              ? `${Math.round(heartRateAverage)} bpm`
+              : '-',
+          },
+        ]}
+      >
+        <TrendChart
+          points={loadPoints}
+          series={loadSeries}
+          formatValue={(value, index) =>
+            index === 0 ? `${Math.round(value)}` : `${Math.round(value)} bpm`
           }
           formatAxis={(value) => round(value, 0)}
         />

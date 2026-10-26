@@ -41,10 +41,15 @@
 }
 
 .axisLabel {
-  fill: hsl(var(--subtle));
+  fill: hsl(var(--muted));
   font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 0.08em;
+  /* the labels stay readable where a bar reaches behind them */
+  paint-order: stroke fill;
+  stroke: hsl(222 60% 6% / 0.92);
+  stroke-width: 2.5px;
+  stroke-linejoin: round;
 }
 
 .bar {

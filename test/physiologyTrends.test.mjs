@@ -56,8 +56,18 @@ const buckets = monthBuckets(
     activity(4, 9000, '2025-12-05 19:00:00', '2025-12-05 11:00:00'),
   ],
   [
-    metric('2026-03-01 23:12:00', { elevation_gain: 300, max_elevation: 800 }),
-    metric('2026-03-19 23:12:00', { elevation_gain: 100, max_elevation: 700 }),
+    metric('2026-03-01 23:12:00', {
+      elevation_gain: 300,
+      max_elevation: 800,
+      training_load: 120,
+      avg_hr: 150,
+    }),
+    metric('2026-03-19 23:12:00', {
+      elevation_gain: 100,
+      max_elevation: 700,
+      training_load: 80,
+      avg_hr: 160,
+    }),
     metric('2026-04-05 11:20:00', { elevation_gain: 50, max_elevation: 600 }),
   ],
   '2026'
@@ -72,8 +82,24 @@ assert.equal(buckets[0].movingTime, 3600, 'the moving time of the month');
 assert.equal(buckets[0].elevationGain, 400, 'the climb of the month is summed');
 assert.equal(buckets[0].maxElevation, 800, 'the highest point of the month');
 assert.equal(buckets[0].climbRate, 20, 'the climb per kilometre of the month');
+assert.equal(
+  buckets[0].trainingLoad,
+  100,
+  'the training load of the month is averaged'
+);
+assert.equal(buckets[0].avgHr, 155, 'the heart rate of the month is averaged');
 assert.equal(buckets[1].month, '2026-04');
 assert.equal(buckets[1].runs, 1);
+assert.equal(
+  buckets[1].trainingLoad,
+  null,
+  'a month without metrics has no load'
+);
+assert.equal(
+  buckets[1].avgHr,
+  null,
+  'a month without metrics has no heart rate'
+);
 
 const total = monthBuckets(
   [
@@ -124,7 +150,11 @@ const vo2Total = vo2Trend(
   'Total'
 );
 assert.equal(vo2Total.length, 2, 'the total view keeps every year');
-assert.equal(vo2Total[0].date, '2025-12-05', 'the points start with the oldest run');
+assert.equal(
+  vo2Total[0].date,
+  '2025-12-05',
+  'the points start with the oldest run'
+);
 assert.equal(
   vo2Total[1].x,
   87,

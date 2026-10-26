@@ -37,6 +37,8 @@ export interface MonthBucket {
   climbRate: number;
   aerobicTe: number | null;
   vo2Max: number | null;
+  trainingLoad: number | null;
+  avgHr: number | null;
 }
 
 export interface Vo2Point {
@@ -110,6 +112,33 @@ export const matchMetrics = (
 const inYear = (activity: ActivityLike, year: string): boolean =>
   year === 'Total' || activity.start_date_local.slice(0, 4) === year;
 
+interface MonthValues {
+  aerobicTe: number[];
+  vo2Max: number[];
+  trainingLoad: number[];
+  avgHr: number[];
+}
+
+const valuesFor = (values: Map<string, MonthValues>, month: string) => {
+  const found = values.get(month);
+  if (found) {
+    return found;
+  }
+  const created: MonthValues = {
+    aerobicTe: [],
+    vo2Max: [],
+    trainingLoad: [],
+    avgHr: [],
+  };
+  values.set(month, created);
+  return created;
+};
+
+const average = (list: number[] | undefined) =>
+  list?.length
+    ? list.reduce((sum, value) => sum + value, 0) / list.length
+    : null;
+
 /**
  * One bucket per month with the volume of the month and the metrics Garmin
  * recorded for the runs inside it.
@@ -121,8 +150,7 @@ export const monthBuckets = (
 ): MonthBucket[] => {
   const matched = matchMetrics(activities, metrics);
   const buckets = new Map<string, MonthBucket>();
-  const aerobic = new Map<string, number[]>();
-  const vo2 = new Map<string, number[]>();
+  const values = new Map<string, MonthValues>();
 
   activities
     .filter((activity) => inYear(activity, year))
@@ -141,6 +169,8 @@ export const monthBuckets = (
           climbRate: 0,
           aerobicTe: null,
           vo2Max: null,
+          trainingLoad: null,
+          avgHr: null,
         } as MonthBucket);
 
       bucket.runs += 1;
@@ -159,15 +189,18 @@ export const monthBuckets = (
             metric.max_elevation
           );
         }
+        const monthValues = valuesFor(values, month);
         if (typeof metric.aerobic_te === 'number') {
-          const list = aerobic.get(month) ?? [];
-          list.push(metric.aerobic_te);
-          aerobic.set(month, list);
+          monthValues.aerobicTe.push(metric.aerobic_te);
         }
         if (typeof metric.vo2_max === 'number') {
-          const list = vo2.get(month) ?? [];
-          list.push(metric.vo2_max);
-          vo2.set(month, list);
+          monthValues.vo2Max.push(metric.vo2_max);
+        }
+        if (typeof metric.training_load === 'number') {
+          monthValues.trainingLoad.push(metric.training_load);
+        }
+        if (typeof metric.avg_hr === 'number') {
+          monthValues.avgHr.push(metric.avg_hr);
         }
       }
 
@@ -180,14 +213,11 @@ export const monthBuckets = (
   result.forEach((bucket) => {
     bucket.climbRate =
       bucket.distance > 0 ? bucket.elevationGain / (bucket.distance / 1000) : 0;
-    const aerobicList = aerobic.get(bucket.month);
-    bucket.aerobicTe = aerobicList?.length
-      ? aerobicList.reduce((sum, value) => sum + value, 0) / aerobicList.length
-      : null;
-    const vo2List = vo2.get(bucket.month);
-    bucket.vo2Max = vo2List?.length
-      ? vo2List.reduce((sum, value) => sum + value, 0) / vo2List.length
-      : null;
+    const monthValues = values.get(bucket.month);
+    bucket.aerobicTe = average(monthValues?.aerobicTe);
+    bucket.vo2Max = average(monthValues?.vo2Max);
+    bucket.trainingLoad = average(monthValues?.trainingLoad);
+    bucket.avgHr = average(monthValues?.avgHr);
   });
   return result;
 };
