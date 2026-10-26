@@ -51,6 +51,9 @@ export interface Vo2Point {
 // A metric is only trusted when it starts close to the activity it belongs to
 const MATCH_WINDOW_MS = 45 * 60 * 1000;
 const AVERAGE_WINDOW_DAYS = 30;
+// The track of the file and the length the API reports differ by a few metres
+const DISTANCE_TOLERANCE = 0.05;
+const DISTANCE_SLACK = 200;
 
 const parseUtc = (value: string): number =>
   new Date(`${value.replace(' ', 'T')}Z`).getTime();
@@ -66,45 +69,78 @@ export const movingTimeSeconds = (movingTime: string): number => {
   return ((days * 24 + hours) * 60 + minutes) * 60 + seconds;
 };
 
+const sameRun = (activity: ActivityLike, metric: MetricLike): boolean => {
+  if (
+    typeof activity.distance !== 'number' ||
+    typeof metric.distance !== 'number' ||
+    activity.distance <= 0 ||
+    metric.distance <= 0
+  ) {
+    return true;
+  }
+  const slack = Math.max(DISTANCE_SLACK, activity.distance * DISTANCE_TOLERANCE);
+  return Math.abs(activity.distance - metric.distance) <= slack;
+};
+
 /**
  * Garmin records the start of an activity a few seconds apart from the first
  * point of the track, so a metric belongs to the activity that starts closest
- * to it on the same day.
+ * to it on the same day. A metric is given to one activity only and the
+ * length of the run has to agree, otherwise the metric belongs to another run
+ * of the same day.
  */
 export const matchMetrics = (
   activities: ActivityLike[],
   metrics: MetricLike[]
 ): Map<number, MetricLike> => {
-  const byDay = new Map<string, MetricLike[]>();
-  metrics.forEach((metric) => {
+  const byDay = new Map<string, number[]>();
+  metrics.forEach((metric, index) => {
+    if (typeof metric?.start_date !== 'string') {
+      return;
+    }
     const day = metric.start_date.slice(0, 10);
     const bucket = byDay.get(day);
     if (bucket) {
-      bucket.push(metric);
+      bucket.push(index);
     } else {
-      byDay.set(day, [metric]);
+      byDay.set(day, [index]);
     }
   });
 
-  const matched = new Map<number, MetricLike>();
+  const pairs: Array<{
+    activity: ActivityLike;
+    metric: MetricLike;
+    gap: number;
+  }> = [];
   activities.forEach((activity) => {
+    if (typeof activity.start_date !== 'string') {
+      return;
+    }
     const candidates = byDay.get(activity.start_date.slice(0, 10));
-    if (!candidates || !candidates.length) {
+    if (!candidates) {
       return;
     }
     const target = parseUtc(activity.start_date);
-    let best: MetricLike | null = null;
-    let bestDistance = Infinity;
-    candidates.forEach((candidate) => {
-      const distance = Math.abs(parseUtc(candidate.start_date) - target);
-      if (distance < bestDistance) {
-        bestDistance = distance;
-        best = candidate;
+    candidates.forEach((index) => {
+      const candidate = metrics[index];
+      const gap = Math.abs(parseUtc(candidate.start_date) - target);
+      if (gap > MATCH_WINDOW_MS || !sameRun(activity, candidate)) {
+        return;
       }
+      pairs.push({ activity, metric: candidate, gap });
     });
-    if (best && bestDistance <= MATCH_WINDOW_MS) {
-      matched.set(activity.run_id, best);
+  });
+
+  pairs.sort((a, b) => a.gap - b.gap);
+
+  const matched = new Map<number, MetricLike>();
+  const taken = new Set<MetricLike>();
+  pairs.forEach((pair) => {
+    if (taken.has(pair.metric)) {
+      return;
     }
+    taken.add(pair.metric);
+    matched.set(pair.activity.run_id, pair.metric);
   });
   return matched;
 };

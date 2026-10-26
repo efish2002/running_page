@@ -46,6 +46,35 @@ const farAway = matchMetrics(
 );
 assert.equal(farAway.size, 0, 'a metric hours away is not a match');
 
+// a metric belongs to one activity only
+const contested = matchMetrics(
+  [
+    activity(10, 8000, '2026-05-02 07:40:00', '2026-05-01 23:40:00'),
+    activity(11, 8000, '2026-05-02 07:10:00', '2026-05-01 23:10:00'),
+  ],
+  [metric('2026-05-01 23:12:00', { vo2_max: 51 })]
+);
+assert.equal(contested.size, 1, 'a metric is given to one activity only');
+assert.equal(
+  contested.get(11).vo2_max,
+  51,
+  'the activity that starts closest wins'
+);
+
+// a metric of another run is not a match
+const wrongLength = matchMetrics(
+  [activity(12, 5000, '2026-06-02 07:10:00', '2026-06-01 23:10:00')],
+  [metric('2026-06-01 23:10:00', { vo2_max: 51, distance: 21000 })]
+);
+assert.equal(wrongLength.size, 0, 'a metric of another run is not a match');
+
+// the same run is a match
+const sameLength = matchMetrics(
+  [activity(13, 5000, '2026-06-02 07:10:00', '2026-06-01 23:10:00')],
+  [metric('2026-06-01 23:10:00', { vo2_max: 51, distance: 5010 })]
+);
+assert.equal(sameLength.size, 1, 'a metric of the same run is a match');
+
 // --- monthBuckets --------------------------------------------------------
 
 const buckets = monthBuckets(
