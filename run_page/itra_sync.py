@@ -13,7 +13,10 @@ touched.
 import argparse
 import json
 import os
+import shutil
+import subprocess
 import sys
+import tempfile
 import time
 from datetime import date, datetime
 
@@ -56,6 +59,13 @@ MAX_ROUTE_POINTS = 500
 # the site answers with an empty body when it throttles the requests
 RETRIES = 5
 RETRY_WAIT = 8.0
+
+# the site answers a plain request with a javascript challenge, a browser that
+# runs with a screen solves it
+BROWSER_SCRIPT = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "itra_browser.mjs"
+)
+BROWSER_TIMEOUT = 300
 
 
 def clean(text):
@@ -364,6 +374,48 @@ def get_page(client, url):
         return client.get(url, allow_redirects=True)
 
 
+def browser_documents(pages):
+    """The pages of the runner space, read by a browser.
+
+    The site answers a plain request with a javascript challenge that only a
+    browser can solve, so the pages are read with one browser that keeps the
+    cookie of the challenge.
+    """
+    node = shutil.which("node")
+    if not node:
+        print("no node was found, the pages are read with a plain request")
+        return {}
+
+    folder = tempfile.mkdtemp(prefix="itra-pages-")
+    try:
+        command = [node, BROWSER_SCRIPT, folder]
+        for name, (url, marker) in pages.items():
+            command += [name, url, marker]
+        result = subprocess.run(
+            command, capture_output=True, text=True, timeout=BROWSER_TIMEOUT
+        )
+        documents = {}
+        for name in pages:
+            path = os.path.join(folder, f"{name}.html")
+            if not os.path.exists(path):
+                continue
+            with open(path, "r", encoding="utf-8") as handle:
+                documents[name] = lxml_html.fromstring(handle.read())
+        if result.returncode != 0:
+            # a page that failed must not throw the pages that worked away
+            print(
+                f"the browser could not read every page: {result.stderr.strip()[-300:]}"
+            )
+        for line in result.stdout.strip().splitlines():
+            print(line)
+        return documents
+    except (OSError, subprocess.SubprocessError) as error:
+        print(f"the browser could not read the pages: {error}")
+        return {}
+    finally:
+        shutil.rmtree(folder, ignore_errors=True)
+
+
 def fetch_document(url):
     """Read a page of the runner space, the site throttles the requests."""
     problem = "no answer"
@@ -382,6 +434,19 @@ def fetch_document(url):
     raise RuntimeError(f"{url} could not be read: {problem}")
 
 
+def empty_profile():
+    """The profile of a runner that could not be read."""
+    return {
+        "name": "",
+        "itraId": "",
+        "performanceIndex": 0,
+        "level": "",
+        "gender": "",
+        "ageCategory": "",
+        "url": RUNNER_SPACE,
+    }
+
+
 def fetch_profile():
     """The profile of the runner, the page puts it into the html itself."""
     try:
@@ -390,15 +455,7 @@ def fetch_profile():
         # the races matter more than the profile, a broken profile is no reason
         # to throw the whole sync away
         print(f"the runner space page could not be read: {error}")
-        return {
-            "name": "",
-            "itraId": "",
-            "performanceIndex": 0,
-            "level": "",
-            "gender": "",
-            "ageCategory": "",
-            "url": RUNNER_SPACE,
-        }
+        return empty_profile()
     return parse_profile(document)
 
 
@@ -425,8 +482,17 @@ def main():
     )
     args = parser.parse_args()
 
-    document = fetch_document(TABLE_URL)
-    races = parse_rows(document)
+    documents = browser_documents(
+        {
+            "table": (TABLE_URL, "table-body-row"),
+            "space": (RUNNER_SPACE, "ITRA ID"),
+        }
+    )
+
+    table = documents.get("table")
+    if table is None:
+        table = fetch_document(TABLE_URL)
+    races = parse_rows(table)
     if not races:
         print("no race was found in the runner space table")
         return 1
@@ -441,11 +507,12 @@ def main():
     matched = sum(1 for race in races if race.get("route"))
     print(f"{matched} of {len(races)} races got a route from the activity file")
 
-    profile = fetch_profile()
+    space = documents.get("space")
+    profile = parse_profile(space) if space is not None else fetch_profile()
     if not profile["name"]:
         # the site throttles the requests, a profile that could not be read
         # must not wipe the one of the last run
-        profile = previous_profile(args.output) or profile
+        profile = previous_profile(args.output) or empty_profile()
 
     payload = {
         "updatedAt": datetime.now().strftime("%Y-%m-%d"),
