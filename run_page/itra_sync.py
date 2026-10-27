@@ -356,15 +356,21 @@ def build_routes(races, activities):
     return races
 
 
+def get_page(client, url):
+    """A page of the site, httpx renamed the flag of the redirects in 0.20."""
+    try:
+        return client.get(url, follow_redirects=True)
+    except TypeError:
+        return client.get(url, allow_redirects=True)
+
+
 def fetch_document(url):
     """Read a page of the runner space, the site throttles the requests."""
     problem = "no answer"
     for attempt in range(RETRIES):
         try:
-            with httpx.Client(
-                timeout=TIME_OUT, headers=HEADERS, follow_redirects=True
-            ) as client:
-                response = client.get(url)
+            with httpx.Client(timeout=TIME_OUT, headers=HEADERS) as client:
+                response = get_page(client, url)
             if response.status_code == 200 and response.text.strip():
                 return lxml_html.fromstring(response.text)
             problem = f"the page answered {response.status_code}"
