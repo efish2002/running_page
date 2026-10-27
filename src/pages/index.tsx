@@ -177,18 +177,20 @@ const Index = () => {
   return (
     <Layout>
       <section className={`panel panel-bracket ${styles.hud}`}>
-        <div className="eyebrow">
-          <span className="status-dot" />
-          telemetry / 运行遥测
-        </div>
-        <h1 className={styles.hudTitle}>
-          <a href="/">{siteTitle}</a>
-        </h1>
-        <p className={styles.hudText}>{INFO_MESSAGE(years.length, year)}</p>
-        <div className={styles.chips}>
-          <span className="chip">{years.length} years</span>
-          <span className="chip">{activities.length} runs</span>
-          <span className="chip">{totalDistance.toFixed(0)} km</span>
+        <div className={styles.hudIntro}>
+          <div className="eyebrow">
+            <span className="status-dot" />
+            telemetry / 运行遥测
+          </div>
+          <h1 className={styles.hudTitle}>
+            <a href="/">{siteTitle}</a>
+          </h1>
+          <p className={styles.hudText}>{INFO_MESSAGE(years.length, year)}</p>
+          <div className={styles.chips}>
+            <span className="chip">{years.length} years</span>
+            <span className="chip">{activities.length} runs</span>
+            <span className="chip">{totalDistance.toFixed(0)} km</span>
+          </div>
         </div>
       </section>
       <aside className={styles.rail}>

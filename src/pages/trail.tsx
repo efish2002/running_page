@@ -16,6 +16,9 @@ import {
 import itraPayload from '@/static/itra_races.json';
 import styles from './style.module.css';
 
+const INTRO =
+  '全部比赛成绩来自 ITRA 跑步空间。上方是三维地形图，中部是每一场比赛的路线缩略图，下方是累计指标与年度、分类分布。路线几何取自本地 Garmin 活动记录。';
+
 const Trail = () => {
   const races = useMemo(() => parseItraRaces(itraPayload), []);
   const runner = useMemo(() => parseItraRunner(itraPayload), []);
@@ -44,7 +47,9 @@ const Trail = () => {
 
   return (
     <Layout wide>
-      <section className={`panel panel-bracket ${styles.hud}`}>
+      <section
+        className={`panel panel-bracket ${styles.hud} ${styles.hudSplit}`}
+      >
         <div className={styles.hudIntro}>
           <div className="eyebrow">
             <span className="status-dot" />
@@ -53,14 +58,13 @@ const Trail = () => {
           <h1 className={styles.hudTitle}>
             <a href="/trail">越野跑 · ITRA 赛事与路线</a>
           </h1>
-          <p className={styles.hudText}>
-            全部比赛成绩来自 ITRA 跑步空间。上方是三维地形图，中部是每一场比赛的路线缩略图，
-            下方是累计指标与年度、分类分布。路线几何取自本地 Garmin 活动记录。
-          </p>
+          <p className={styles.hudText}>{INTRO}</p>
           <div className={styles.chips}>
             <span className="chip">{races.length} races</span>
             <span className="chip">{totalDistance.toFixed(0)} km</span>
-            <span className="chip">{totalElevation.toLocaleString('en-US')} m↑</span>
+            <span className="chip">
+              {totalElevation.toLocaleString('en-US')} m↑
+            </span>
             <span className="chip">itra.run</span>
           </div>
         </div>
@@ -69,11 +73,7 @@ const Trail = () => {
       </section>
 
       <div className={styles.main}>
-        <TrailMap
-          races={visible}
-          selected={selected}
-          onSelect={setSelected}
-        />
+        <TrailMap races={visible} selected={selected} onSelect={setSelected} />
         <TrailRaces
           races={visible}
           years={years}

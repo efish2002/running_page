@@ -9,7 +9,7 @@
 
 /* the profile of the runner sits beside the title on a wide screen */
 @media (min-width: 900px) {
-  .hud {
+  .hudSplit {
     grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
     gap: 1.75rem;
   }
