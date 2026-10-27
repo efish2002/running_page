@@ -144,7 +144,9 @@ def parse_rows(document):
 
         distance_km, elevation_m = parse_distance(cell_tail(row, "distance-col"))
         gender_rank, gender_total = parse_ratio(cell_value(row, "col-general"))
-        general_rank, general_total = parse_ratio(cell_value(row, "col-general-ranking"))
+        general_rank, general_total = parse_ratio(
+            cell_value(row, "col-general-ranking")
+        )
 
         finishers, dnf = parse_ratio(cell_value(row, "col-finishers"))
         participants = first_number(cell_value(row, "col-participants"))
@@ -275,9 +277,20 @@ def match_activity(race, activities):
         gap = abs((other - day).days)
         if gap > NEAR_DAYS:
             continue
-        if not distance_ok(race.get("distanceKm") or 0, (activity.get("distance") or 0) / 1000):
+        if not distance_ok(
+            race.get("distanceKm") or 0, (activity.get("distance") or 0) / 1000
+        ):
             continue
-        candidates.append((gap, abs((activity.get("distance") or 0) / 1000 - (race.get("distanceKm") or 0)), activity))
+        candidates.append(
+            (
+                gap,
+                abs(
+                    (activity.get("distance") or 0) / 1000
+                    - (race.get("distanceKm") or 0)
+                ),
+                activity,
+            )
+        )
 
     if not candidates:
         return None, None
@@ -313,7 +326,9 @@ def build_routes(races, activities):
 
 def fetch_document(url):
     """Read the runner space table."""
-    with httpx.Client(timeout=TIME_OUT, headers=HEADERS, follow_redirects=True) as client:
+    with httpx.Client(
+        timeout=TIME_OUT, headers=HEADERS, follow_redirects=True
+    ) as client:
         response = client.get(url)
         response.raise_for_status()
         return lxml_html.fromstring(response.text)
