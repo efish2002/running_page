@@ -14,6 +14,7 @@ import argparse
 import json
 import os
 import sys
+import time
 from datetime import date, datetime
 
 import httpx
@@ -51,6 +52,10 @@ NEAR_DAYS = 2
 # need every single point of the track
 SIMPLIFY_TOLERANCE = 0.00005
 MAX_ROUTE_POINTS = 500
+
+# the site answers with an empty body when it throttles the requests
+RETRIES = 5
+RETRY_WAIT = 8.0
 
 
 def clean(text):
@@ -97,6 +102,33 @@ def cell_value(row, class_name):
     if values:
         return clean(values[0].text_content())
     return cell_tail(row, class_name)
+
+
+def paragraph_value(document, label):
+    """The bold value of the paragraph of the profile that carries the label."""
+    for paragraph in document.xpath("//div[@id='divShowResults']//p"):
+        if not clean(paragraph.text_content()).startswith(label):
+            continue
+        values = paragraph.xpath(".//b")
+        if values:
+            return clean(values[0].text_content())
+    return ""
+
+
+def parse_profile(document):
+    """The name, the itra id and the performance index of the runner."""
+    names = document.xpath("//div[@id='divShowResults']/preceding-sibling::h4[1]")
+    counts = document.xpath("//div[@id='divProgress']//span[@class='level-count']")
+    levels = document.xpath("//div[@id='divProgress']//span[@class='level']")
+    return {
+        "name": clean(names[0].text_content()) if names else "",
+        "itraId": paragraph_value(document, "ITRA ID:"),
+        "performanceIndex": first_number(counts[0].text_content()) if counts else 0,
+        "level": clean(levels[0].text_content()) if levels else "",
+        "gender": paragraph_value(document, "Gender:"),
+        "ageCategory": paragraph_value(document, "Age Category:"),
+        "url": RUNNER_SPACE,
+    }
 
 
 def parse_distance(text):
@@ -325,13 +357,58 @@ def build_routes(races, activities):
 
 
 def fetch_document(url):
-    """Read the runner space table."""
-    with httpx.Client(
-        timeout=TIME_OUT, headers=HEADERS, follow_redirects=True
-    ) as client:
-        response = client.get(url)
-        response.raise_for_status()
-        return lxml_html.fromstring(response.text)
+    """Read a page of the runner space, the site throttles the requests."""
+    problem = "no answer"
+    for attempt in range(RETRIES):
+        try:
+            with httpx.Client(
+                timeout=TIME_OUT, headers=HEADERS, follow_redirects=True
+            ) as client:
+                response = client.get(url)
+            if response.status_code == 200 and response.text.strip():
+                return lxml_html.fromstring(response.text)
+            problem = f"the page answered {response.status_code}"
+        except httpx.HTTPError as error:
+            problem = str(error)
+        if attempt < RETRIES - 1:
+            print(f"{url} did not answer, trying again in {RETRY_WAIT}s")
+            time.sleep(RETRY_WAIT)
+    raise RuntimeError(f"{url} could not be read: {problem}")
+
+
+def fetch_profile():
+    """The profile of the runner, the page puts it into the html itself."""
+    try:
+        document = fetch_document(RUNNER_SPACE)
+    except (RuntimeError, lxml_html.etree.ParserError) as error:
+        # the races matter more than the profile, a broken profile is no reason
+        # to throw the whole sync away
+        print(f"the runner space page could not be read: {error}")
+        return {
+            "name": "",
+            "itraId": "",
+            "performanceIndex": 0,
+            "level": "",
+            "gender": "",
+            "ageCategory": "",
+            "url": RUNNER_SPACE,
+        }
+    return parse_profile(document)
+
+
+def previous_profile(path):
+    """The profile of the last run, it is kept when the site stays silent."""
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            stored = json.load(handle)
+    except (OSError, ValueError):
+        return None
+    runner = stored.get("runner")
+    if isinstance(runner, dict) and runner.get("name"):
+        return runner
+    return None
 
 
 def main():
@@ -358,9 +435,15 @@ def main():
     matched = sum(1 for race in races if race.get("route"))
     print(f"{matched} of {len(races)} races got a route from the activity file")
 
+    profile = fetch_profile()
+    if not profile["name"]:
+        # the site throttles the requests, a profile that could not be read
+        # must not wipe the one of the last run
+        profile = previous_profile(args.output) or profile
+
     payload = {
         "updatedAt": datetime.now().strftime("%Y-%m-%d"),
-        "runner": RUNNER_SPACE,
+        "runner": profile,
         "races": races,
     }
     os.makedirs(os.path.dirname(os.path.abspath(args.output)), exist_ok=True)

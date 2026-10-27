@@ -75,6 +75,16 @@ export interface TrailBounds {
   maxLat: number;
 }
 
+export interface TrailRunner {
+  name: string;
+  itraId: string;
+  performanceIndex: number;
+  level: string;
+  gender: string;
+  ageCategory: string;
+  url: string;
+}
+
 // the categories of ITRA, from the shortest to the longest
 const CATEGORY_ORDER = [
   'Vertical',
@@ -145,6 +155,42 @@ export const parseItraRaces = (payload: {
       points: route ? decodeRoute(route.polyline) : [],
     };
   });
+};
+
+export const parseItraRunner = (payload: {
+  runner?: Record<string, unknown> | string;
+}): TrailRunner => {
+  const raw =
+    payload?.runner && typeof payload.runner === 'object' ? payload.runner : {};
+  const text = (key: string): string =>
+    typeof raw[key] === 'string' ? (raw[key] as string) : '';
+  return {
+    name: text('name'),
+    itraId: text('itraId'),
+    performanceIndex: numberOr(raw.performanceIndex),
+    level: text('level'),
+    gender: text('gender'),
+    ageCategory: text('ageCategory'),
+    url: text('url'),
+  };
+};
+
+// the performance index of itra sits on a scale from 40 to 1000, above 900
+// the marker stops a little before the end of the bar
+const INDEX_MIN = 40;
+const INDEX_MAX = 1000;
+const INDEX_TOP = 900;
+const INDEX_TOP_POSITION = 95.5;
+
+export const indexProgress = (performanceIndex: number): number => {
+  if (!performanceIndex || performanceIndex < INDEX_MIN) {
+    return 0;
+  }
+  if (performanceIndex >= INDEX_TOP) {
+    return INDEX_TOP_POSITION;
+  }
+  const position = ((performanceIndex - INDEX_MIN) / INDEX_MAX) * 100;
+  return Math.round(Math.max(0, Math.min(100, position)) * 10) / 10;
 };
 
 export const filterRaces = (

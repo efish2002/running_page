@@ -4,7 +4,9 @@ import {
   boundsOf,
   decodeRoute,
   filterRaces,
+  indexProgress,
   parseItraRaces,
+  parseItraRunner,
   routeThumbnailPath,
   summariseRaces,
 } from '../src/utils/trail.ts';
@@ -75,6 +77,70 @@ assert.equal(bare[0].category, '', 'a race without a category still parses');
 assert.equal(bare[0].distanceKm, 0, 'a race without a distance still parses');
 assert.equal(bare[0].generalRank, null, 'a race without a rank has no rank');
 assert.equal(bare[0].year, '2024', 'a bare race still knows its year');
+
+// --- parseItraRunner -----------------------------------------------------
+
+const runner = parseItraRunner({
+  runner: {
+    name: 'Hao GAO',
+    itraId: 'ITRA-4683832',
+    performanceIndex: 598,
+    level: 'Advanced 4',
+    gender: 'Male',
+    ageCategory: 'M 40-44',
+    url: 'https://itra.run/RunnerSpace/gao.hao.4683832',
+  },
+});
+
+assert.equal(runner.name, 'Hao GAO', 'the runner keeps the name');
+assert.equal(runner.itraId, 'ITRA-4683832', 'the runner keeps the itra id');
+assert.equal(runner.performanceIndex, 598, 'the runner keeps the index');
+assert.equal(runner.level, 'Advanced 4', 'the runner keeps the level');
+assert.equal(runner.gender, 'Male', 'the runner keeps the gender');
+assert.equal(
+  runner.ageCategory,
+  'M 40-44',
+  'the runner keeps the age category'
+);
+assert.equal(
+  runner.url,
+  'https://itra.run/RunnerSpace/gao.hao.4683832',
+  'the runner keeps the link'
+);
+
+const emptyRunner = parseItraRunner({});
+assert.equal(emptyRunner.name, '', 'a payload without a runner has no name');
+assert.equal(emptyRunner.itraId, '', 'a payload without a runner has no id');
+assert.equal(
+  emptyRunner.performanceIndex,
+  0,
+  'a payload without a runner has no index'
+);
+assert.equal(emptyRunner.level, '', 'a payload without a runner has no level');
+assert.equal(emptyRunner.url, '', 'a payload without a runner has no link');
+
+const staleRunner = parseItraRunner({
+  runner: 'https://itra.run/RunnerSpace/gao.hao.4683832',
+});
+assert.equal(
+  staleRunner.name,
+  '',
+  'a runner that is still a plain link has no name'
+);
+assert.equal(
+  staleRunner.url,
+  '',
+  'a runner that is still a plain link has no link'
+);
+
+// --- indexProgress -------------------------------------------------------
+
+assert.equal(indexProgress(598), 55.8, 'the index sits where itra puts it');
+assert.equal(indexProgress(40), 0, 'the lowest index is at the start');
+assert.equal(indexProgress(900), 95.5, 'a top index stops before the end');
+assert.equal(indexProgress(1000), 95.5, 'the highest index stops as well');
+assert.equal(indexProgress(20), 0, 'an index below the scale has no progress');
+assert.equal(indexProgress(0), 0, 'an unknown index has no progress');
 
 // --- decodeRoute ---------------------------------------------------------
 

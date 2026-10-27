@@ -1,6 +1,22 @@
 .hud {
   grid-area: hud;
   padding: 1.25rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+/* the profile of the runner sits beside the title on a wide screen */
+@media (min-width: 900px) {
+  .hud {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+    gap: 1.75rem;
+  }
+}
+
+.hudIntro {
+  min-width: 0;
 }
 
 .hudTitle {

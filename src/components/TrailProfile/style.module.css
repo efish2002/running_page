@@ -1,0 +1,131 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.9rem 1rem 1rem;
+  border-radius: 12px;
+  border: 1px solid hsl(var(--line) / 0.14);
+  background: linear-gradient(
+    180deg,
+    hsl(var(--accent) / 0.07) 0%,
+    hsl(220 45% 10% / 0.5) 60%
+  );
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.level {
+  flex-shrink: 0;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid hsl(var(--signal) / 0.4);
+  background: hsl(var(--signal) / 0.12);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: hsl(var(--signal));
+}
+
+.name {
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: hsl(var(--foreground));
+}
+
+.name:hover {
+  color: hsl(var(--accent));
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.tag {
+  padding: 2px 6px;
+  border-radius: 5px;
+  border: 1px solid hsl(var(--line) / 0.14);
+  background: hsl(var(--line) / 0.05);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: hsl(var(--muted));
+}
+
+.index {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.15rem;
+}
+
+.indexValue {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: hsl(var(--accent));
+  text-shadow: 0 0 18px hsl(var(--accent) / 0.5);
+}
+
+.track {
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  background: hsl(var(--line) / 0.12);
+  overflow: visible;
+}
+
+.fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    hsl(var(--accent)) 0%,
+    hsl(var(--accent-2)) 100%
+  );
+  box-shadow: 0 0 14px -2px hsl(var(--accent) / 0.8);
+}
+
+.marker {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  background: hsl(var(--foreground));
+  box-shadow:
+    0 0 0 2px hsl(var(--accent)),
+    0 0 16px hsl(var(--accent) / 0.9);
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  align-self: flex-start;
+  margin-top: 0.1rem;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: hsl(var(--accent));
+}
+
+.link:hover {
+  color: hsl(var(--foreground));
+}

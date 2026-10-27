@@ -219,14 +219,19 @@ jobs:
 
 
       - name: Run sync ITRA race results script
-        if: env.RUN_TYPE == 'itra'
+        id: itra
+        if: env.RUN_TYPE == 'itra' || env.RUN_TYPE == 'garmin_cn'
+        # itra throttles the requests, a silent site must not break the daily
+        # garmin pipeline, the last races stay untouched in that case
+        continue-on-error: true
         run: |
           # reads the race results of the runner space and matches the routes
           # with the activities Garmin recorded, the raw files stay untouched
           python run_page/itra_sync.py
 
       - name: Commit ITRA race results
-        if: env.RUN_TYPE == 'itra'
+        if: (env.RUN_TYPE == 'itra' || env.RUN_TYPE == 'garmin_cn') && steps.itra.outcome == 'success'
+        continue-on-error: true
         run: |
           git add src/static/itra_races.json
           if git diff --cached --quiet; then
