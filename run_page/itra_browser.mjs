@@ -161,12 +161,13 @@ const main = async () => {
     browserGone = `the browser stopped with the code ${code}`;
   });
 
+  let devtools = null;
   try {
     const port = await readPort(profile, () => browserGone);
     const version = await fetch(`http://127.0.0.1:${port}/json/version`, {
       signal: AbortSignal.timeout(15000),
     }).then((answer) => answer.json());
-    const devtools = new Devtools(version.webSocketDebuggerUrl);
+    devtools = new Devtools(version.webSocketDebuggerUrl);
     await devtools.open();
     const { targetId } = await devtools.send('Target.createTarget', {
       url: 'about:blank',
@@ -224,6 +225,8 @@ const main = async () => {
     error.message = `${error.message}\n--- the browser said ---\n${browserLog.slice(-2000)}`;
     throw error;
   } finally {
+    // the socket of the browser keeps the loop of node alive, it has to go
+    if (devtools) devtools.socket.close();
     chrome.kill();
     await sleep(1000);
     try {
@@ -234,7 +237,9 @@ const main = async () => {
   }
 };
 
-main().catch((error) => {
-  console.error(error.stack || error.message || error);
-  process.exit(1);
-});
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error.stack || error.message || error);
+    process.exit(1);
+  });
