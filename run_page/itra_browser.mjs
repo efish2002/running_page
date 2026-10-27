@@ -11,6 +11,7 @@
 import { spawn, spawnSync } from 'node:child_process';
 import {
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
@@ -122,6 +123,7 @@ const main = async () => {
   const browser = findBrowser();
   if (!browser) throw new Error('no browser was found on this machine');
 
+  mkdirSync(folder, { recursive: true });
   const profile = mkdtempSync(join(tmpdir(), 'itra-chrome-'));
   const args = [
     '--remote-debugging-port=0',
