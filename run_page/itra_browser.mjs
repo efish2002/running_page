@@ -90,13 +90,14 @@ class Devtools {
   }
 }
 
-const readPort = async (profile) => {
+const readPort = async (profile, gone) => {
   const file = join(profile, 'DevToolsActivePort');
   for (let attempt = 0; attempt < 120; attempt += 1) {
     if (existsSync(file)) {
       const lines = readFileSync(file, 'utf8').split('\n');
       if (lines[0] && lines[0].trim()) return lines[0].trim();
     }
+    if (gone()) throw new Error(gone());
     await sleep(500);
   }
   throw new Error('the browser did not open its devtools port');
@@ -143,15 +144,26 @@ const main = async () => {
     screen[0] || browser,
     [...screen.slice(1), browser, ...args],
     {
-      stdio: 'ignore',
+      stdio: ['ignore', 'pipe', 'pipe'],
     }
   );
+  let browserLog = '';
+  chrome.stdout.on('data', (chunk) => {
+    browserLog += chunk;
+  });
+  chrome.stderr.on('data', (chunk) => {
+    browserLog += chunk;
+  });
+  let browserGone = null;
+  chrome.on('exit', (code) => {
+    browserGone = `the browser stopped with the code ${code}`;
+  });
 
   try {
-    const port = await readPort(profile);
-    const version = await fetch(`http://127.0.0.1:${port}/json/version`).then(
-      (answer) => answer.json()
-    );
+    const port = await readPort(profile, () => browserGone);
+    const version = await fetch(`http://127.0.0.1:${port}/json/version`, {
+      signal: AbortSignal.timeout(15000),
+    }).then((answer) => answer.json());
     const devtools = new Devtools(version.webSocketDebuggerUrl);
     await devtools.open();
     const { targetId } = await devtools.send('Target.createTarget', {
@@ -205,6 +217,10 @@ const main = async () => {
     if (failures.length) {
       throw new Error(failures.join('; '));
     }
+  } catch (error) {
+    // the words of the browser tell why it did not answer
+    error.message = `${error.message}\n--- the browser said ---\n${browserLog.slice(-2000)}`;
+    throw error;
   } finally {
     chrome.kill();
     await sleep(1000);

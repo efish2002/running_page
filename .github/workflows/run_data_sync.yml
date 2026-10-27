@@ -30,6 +30,7 @@ on:
       - run_page/garmin_metrics_sync.py
       - run_page/garmin_training_sync.py
       - run_page/itra_sync.py
+      - run_page/itra_browser.mjs
       - run_page/coros_sync.py
       - run_page/keep_sync.py
       - run_page/gpx_sync.py
