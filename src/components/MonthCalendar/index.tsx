@@ -70,6 +70,17 @@ const MonthCalendar = ({
     [grid]
   );
 
+  // the trailing padding week is invisible but still takes a full row
+  const visibleGrid = useMemo(() => {
+    let lastFilled = -1;
+    grid.forEach((cell, index) => {
+      if (cell.day !== null) {
+        lastFilled = index;
+      }
+    });
+    return grid.slice(0, lastFilled + 1);
+  }, [grid]);
+
   const routes = useMemo(() => {
     const paths = new Map<number, string>();
     grid.forEach((cell) => {
@@ -186,7 +197,7 @@ const MonthCalendar = ({
               {day}
             </div>
           ))}
-          {grid.map((cell, index) => {
+          {visibleGrid.map((cell, index) => {
             if (cell.day === null) {
               return (
                 <div

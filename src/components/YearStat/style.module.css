@@ -66,6 +66,8 @@
 .svg {
   margin: 0.75rem 0 0.25rem;
   width: 100%;
+  /* the svg carries a height in mm, without this the chart floats in a tall box */
+  height: auto;
   border: 0;
   padding: 0;
 }
