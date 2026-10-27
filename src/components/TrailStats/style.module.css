@@ -1,0 +1,150 @@
+.highlights {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem 1rem;
+  padding-top: 0.9rem;
+}
+
+.highlight {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid hsl(var(--line) / 0.12);
+  background: hsl(var(--line) / 0.04);
+}
+
+.highlightName {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: hsl(var(--foreground));
+}
+
+.highlightValue {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: hsl(var(--accent));
+}
+
+.chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  height: 170px;
+  padding-top: 1.4rem;
+}
+
+.barColumn {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  height: 100%;
+}
+
+.barValue {
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin-bottom: 4px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: hsl(var(--foreground));
+}
+
+.barTrack {
+  position: relative;
+  flex: 1 1 0;
+  width: 100%;
+  min-height: 0;
+  border-radius: 4px 4px 0 0;
+  background: hsl(var(--line) / 0.08);
+  overflow: visible;
+}
+
+.barFill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(180deg, hsl(var(--accent)), hsl(var(--accent) / 0.35));
+  box-shadow: 0 0 14px hsl(var(--accent) / 0.45);
+  transition: height 320ms ease;
+}
+
+.barLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: hsl(var(--subtle));
+}
+
+.distribution {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.distribution li {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr 2rem;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.distributionLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: hsl(var(--muted));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.distributionTrack {
+  height: 7px;
+  border-radius: 999px;
+  background: hsl(var(--line) / 0.1);
+  overflow: hidden;
+}
+
+.distributionFill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, hsl(var(--accent-2)), hsl(var(--accent)));
+  box-shadow: 0 0 12px hsl(var(--accent) / 0.4);
+  transition: width 320ms ease;
+}
+
+.distributionValue {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-align: right;
+  color: hsl(var(--foreground));
+}
+
+.note {
+  margin: 0.9rem 0 0;
+  padding-top: 0.7rem;
+  border-top: 1px solid hsl(var(--line) / 0.08);
+  font-size: 12px;
+  line-height: 1.7;
+  color: hsl(var(--muted));
+}
+
+.note a {
+  color: hsl(var(--accent));
+}

@@ -60,3 +60,43 @@
   gap: 1.25rem;
   min-width: 0;
 }
+
+.years {
+  padding: 0;
+}
+
+.yearList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.85rem 1rem 1rem;
+}
+
+.yearButton {
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid hsl(var(--line) / 0.16);
+  background: hsl(var(--surface-raised) / 0.5);
+  color: hsl(var(--muted));
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.yearButton:hover {
+  color: hsl(var(--accent));
+  border-color: hsl(var(--accent) / 0.4);
+}
+
+.yearButtonActive {
+  color: hsl(var(--accent));
+  border-color: hsl(var(--accent) / 0.5);
+  background: hsl(var(--accent) / 0.12);
+  box-shadow: 0 0 14px -4px hsl(var(--accent) / 0.6);
+}

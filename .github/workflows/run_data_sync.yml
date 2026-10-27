@@ -13,6 +13,7 @@ on:
           - garmin_fit
           - garmin_metrics
           - garmin_training
+          - itra
           - only_gpx
           - only_fit
   schedule:
@@ -28,6 +29,7 @@ on:
       - run_page/garmin_sync.py
       - run_page/garmin_metrics_sync.py
       - run_page/garmin_training_sync.py
+      - run_page/itra_sync.py
       - run_page/coros_sync.py
       - run_page/keep_sync.py
       - run_page/gpx_sync.py
@@ -215,6 +217,26 @@ jobs:
 
 
 
+
+      - name: Run sync ITRA race results script
+        if: env.RUN_TYPE == 'itra'
+        run: |
+          # reads the race results of the runner space and matches the routes
+          # with the activities Garmin recorded, the raw files stay untouched
+          python run_page/itra_sync.py
+
+      - name: Commit ITRA race results
+        if: env.RUN_TYPE == 'itra'
+        run: |
+          git add src/static/itra_races.json
+          if git diff --cached --quiet; then
+            echo "itra races unchanged"
+          else
+            git -c user.name="GitHub Action" -c user.email="action@github.com" commit -m "Refresh ITRA race results"
+            # master may have moved on while the races were fetched
+            git pull --rebase origin master || echo "could not rebase the races"
+            git push || echo "could not push the races"
+          fi
 
       - name: Run sync Garmin CN to Garmin script
         if: env.RUN_TYPE == 'garmin_sync_cn_global'

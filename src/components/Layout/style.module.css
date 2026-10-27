@@ -28,3 +28,22 @@
     padding: 2rem 2rem 5rem;
   }
 }
+
+/* a page that stacks its panels from top to bottom */
+.wide {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'hud'
+    'main';
+  max-width: 1400px;
+}
+
+@media (min-width: 1024px) {
+  .wide {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      'hud'
+      'main';
+  }
+}

@@ -5,7 +5,10 @@ import Header from '@/components/Header';
 import useSiteMetadata from '@/hooks/useSiteMetadata';
 import styles from './style.module.css';
 
-const Layout = ({ children }: React.PropsWithChildren) => {
+const Layout = ({
+  children,
+  wide,
+}: React.PropsWithChildren<{ wide?: boolean }>) => {
   const { siteTitle, description } = useSiteMetadata();
 
   return (
@@ -21,13 +24,18 @@ const Layout = ({ children }: React.PropsWithChildren) => {
         />
       </Helmet>
       <Header />
-      <div className={styles.container}>{children}</div>
+      <div
+        className={`${styles.container} ${wide ? styles.wide : ''}`}
+      >
+        {children}
+      </div>
     </>
   );
 };
 
 Layout.propTypes = {
   children: PropTypes.node.isRequired,
+  wide: PropTypes.bool,
 };
 
 export default Layout;
