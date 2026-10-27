@@ -71,3 +71,8 @@
   border: 0;
   padding: 0;
 }
+
+/* the chart ships a black backdrop, the card surface reads better */
+.svg > :first-child {
+  fill: transparent;
+}
