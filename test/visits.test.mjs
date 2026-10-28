@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {
   VISIT_COUNTER_KEY,
   VISIT_HISTORY_DAYS,
+  countForDate,
   dailyVisitKey,
   formatVisitCount,
   mergeVisitDays,
@@ -179,3 +180,31 @@ assert.equal(bars.length, 3, 'every day gets a bar');
 assert.equal(bars[1].ratio, 1, 'the busiest day fills the chart');
 assert.equal(bars[0].ratio, 0, 'a quiet day stays flat');
 assert.equal(bars[2].ratio, 0.4, 'a bar follows the busiest day');
+
+// --- the count of a single day ----------------------------------------------
+
+assert.equal(
+  countForDate(
+    [
+      { date: '2026-10-27', count: 4 },
+      { date: '2026-10-28', count: 9 },
+    ],
+    '2026-10-28'
+  ),
+  9,
+  'the count of the given day comes from the record'
+);
+
+assert.equal(
+  countForDate(
+    [
+      { date: '2026-10-27', count: 4 },
+      { date: '2026-10-28', count: 9 },
+    ],
+    '2026-10-29'
+  ),
+  0,
+  'a day the record does not hold counts zero'
+);
+
+assert.equal(countForDate([], '2026-10-28'), 0, 'an empty record counts zero');

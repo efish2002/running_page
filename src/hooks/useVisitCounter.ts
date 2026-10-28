@@ -3,6 +3,7 @@ import visitSnapshotFile from '@/static/visits.json';
 import {
   VisitDay,
   VISIT_COUNTER_KEY,
+  countForDate,
   dailyVisitKey,
   mergeVisitDays,
   parseCounterValue,
@@ -77,15 +78,15 @@ const useVisitCounter = (): VisitCounterState => {
     };
   }, []);
 
+  const today = utcDate();
   const days = mergeVisitDays([
     ...snapshot.days,
-    ...(live.today !== null ? [{ date: utcDate(), count: live.today }] : []),
+    ...(live.today !== null ? [{ date: today, count: live.today }] : []),
   ]);
-  const bakedToday = snapshot.days[snapshot.days.length - 1];
 
   return {
     total: live.total ?? snapshot.total,
-    today: live.today ?? bakedToday?.count ?? 0,
+    today: live.today ?? countForDate(snapshot.days, today),
     days,
     updatedAt: snapshot.updatedAt,
     live: live.total !== null,

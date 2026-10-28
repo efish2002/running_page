@@ -94,3 +94,6 @@ export const visitChartBars = (days: VisitDay[]): VisitChartBar[] => {
     ratio: day.count / busiest,
   }));
 };
+
+export const countForDate = (days: VisitDay[], date: string): number =>
+  days.find((day) => day.date === date)?.count ?? 0;
