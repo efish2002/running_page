@@ -1,0 +1,47 @@
+name: Visit Counter
+
+# the browser counts one hit per page load, this job writes the same numbers
+# into the repository so the site keeps a record of the visits
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '20 3 * * *'
+  push:
+    branches:
+      - master
+    paths:
+      - run_page/visit_sync.py
+      - .github/workflows/visit_count.yml
+
+jobs:
+  count:
+    name: Count the visits
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Snapshot the counter
+        run: python run_page/visit_sync.py
+
+      - name: Commit the visit snapshot
+        run: |
+          git add src/static/visits.json
+          if git diff --cached --quiet; then
+            echo "visits unchanged"
+          else
+            git -c user.name="GitHub Action" -c user.email="action@github.com" commit -m "Refresh the visit counter"
+            # master may have moved on while the counter was read
+            git pull --rebase origin master || echo "could not rebase the visits"
+            git push || echo "could not push the visits"
+          fi

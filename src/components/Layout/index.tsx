@@ -3,6 +3,7 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import Header from '@/components/Header';
 import useSiteMetadata from '@/hooks/useSiteMetadata';
+import useVisitCounter from '@/hooks/useVisitCounter';
 import styles from './style.module.css';
 
 const Layout = ({
@@ -10,6 +11,8 @@ const Layout = ({
   wide,
 }: React.PropsWithChildren<{ wide?: boolean }>) => {
   const { siteTitle, description } = useSiteMetadata();
+  // every page of the site counts as one visit
+  useVisitCounter();
 
   return (
     <>

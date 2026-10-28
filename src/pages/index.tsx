@@ -6,11 +6,14 @@ import MonthCalendar from '@/components/MonthCalendar';
 import RunMap from '@/components/RunMap';
 import RunTable from '@/components/RunTable';
 import SVGStat from '@/components/SVGStat';
+import VisitCounter from '@/components/VisitCounter';
 import YearsStat from '@/components/YearsStat';
 import useActivities from '@/hooks/useActivities';
 import useSiteMetadata from '@/hooks/useSiteMetadata';
+import useVisitCounter from '@/hooks/useVisitCounter';
 import { IS_CHINESE, INFO_MESSAGE } from '@/utils/const';
 import { selectRunsByIds } from '@/utils/runSelection';
+import { formatVisitCount } from '@/utils/visits';
 import {
   Activity,
   IViewState,
@@ -30,6 +33,7 @@ import styles from './style.module.css';
 const Index = () => {
   const { siteTitle } = useSiteMetadata();
   const { activities, thisYear, years } = useActivities();
+  const visits = useVisitCounter();
   const [year, setYear] = useState(thisYear);
   const [runIndex, setRunIndex] = useState(-1);
   const [runs, setActivity] = useState(
@@ -190,6 +194,10 @@ const Index = () => {
             <span className="chip">{years.length} years</span>
             <span className="chip">{activities.length} runs</span>
             <span className="chip">{totalDistance.toFixed(0)} km</span>
+            <span className="chip">
+              {formatVisitCount(visits.total)}{' '}
+              {visits.total === 1 ? 'visit' : 'visits'}
+            </span>
           </div>
         </div>
       </section>
@@ -203,6 +211,13 @@ const Index = () => {
         ) : (
           <YearsStat year={year} onClick={changeYear} />
         )}
+        <VisitCounter
+          total={visits.total}
+          today={visits.today}
+          days={visits.days}
+          updatedAt={visits.updatedAt}
+          live={visits.live}
+        />
       </aside>
       <div className={styles.main}>
         <RunMap

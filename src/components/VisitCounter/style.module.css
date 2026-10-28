@@ -1,0 +1,52 @@
+.panel {
+  overflow: hidden;
+}
+
+.body {
+  padding: 0.9rem 1rem 1.1rem;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.75rem 1rem;
+  padding-bottom: 0.9rem;
+  margin-bottom: 0.35rem;
+  border-bottom: 1px solid hsl(var(--line) / 0.08);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 52px;
+  padding-top: 0.75rem;
+}
+
+.bar {
+  flex: 1;
+  min-width: 0;
+  border-radius: 2px 2px 0 0;
+  background: hsl(var(--accent) / 0.22);
+  box-shadow: inset 0 0 0 1px hsl(var(--accent) / 0.14);
+}
+
+.barLatest {
+  background: hsl(var(--accent) / 0.85);
+  box-shadow: 0 0 10px -2px hsl(var(--accent) / 0.75);
+}
+
+.foot {
+  margin: 0.7rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: hsl(var(--subtle));
+}
