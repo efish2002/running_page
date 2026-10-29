@@ -69,6 +69,9 @@ jobs:
         if: inputs.save_data_in_github_cache || inputs.data_cache_prefix == ''
         uses: actions/cache@v4
         with:
+          # this path list must stay identical to the one of run_data_sync.yml,
+          # actions/cache hashes the paths into the cache version and a job can
+          # only restore a cache that carries the very same version
           path: |
             activities
             assets
@@ -78,6 +81,8 @@ jobs:
             Workouts
             run_page/data.db
             src/static/activities.json
+            run_page/garmin_metrics_cache.json
+            run_page/garmin_training_cache.json
             imported.json
           key: ${{ inputs.data_cache_prefix || 'track_data_rebuild_1154' }}-${{ github.sha }}-${{ github.run_id }}
           restore-keys: |
