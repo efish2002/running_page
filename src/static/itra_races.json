@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-28",
+ "updatedAt": "2026-10-29",
  "runner": {
   "name": "Hao GAO",
   "itraId": "ITRA-4683832",
@@ -18,8 +18,8 @@
    "category": "Half Marathon",
    "country": "CHN",
    "distanceKm": 22.0,
-   "elevationM": 1160,
-   "itraPoints": 0,
+   "elevationM": 1029,
+   "itraPoints": 1,
    "genderRank": 3,
    "genderTotal": 238,
    "generalRank": 3,
@@ -33,7 +33,9 @@
    "time": "2:33:02",
    "score": null,
    "scoreLabel": "DNF",
-   "badges": [],
+   "badges": [
+    "National League"
+   ],
    "route": {
     "runId": 1792283409000,
     "match": "same-day",
