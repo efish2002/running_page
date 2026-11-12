@@ -12,6 +12,7 @@ import { FeatureCollection, LineString } from 'geojson';
 import { MAPBOX_TOKEN } from '@/utils/const';
 import { ROUTE_COLORS } from '@/utils/colors';
 import { TrailRace, boundsOf } from '@/utils/trail';
+import { useMapGestures } from './useMapGestures';
 import styles from './style.module.css';
 
 const DEM_SOURCE = 'trail-dem';
@@ -87,6 +88,8 @@ const TrailMap = ({ races, selected, onSelect }: ITrailMapProps) => {
   const mapRef = useRef<MapRef>();
   const [mapReady, setMapReady] = useState(false);
   const geoData = useMemo(() => routeGeoJson(races), [races]);
+
+  const consumeDrag = useMapGestures(mapRef, mapReady);
 
   const selectedRace = useMemo(
     () => races.find((race) => race.id === selected) ?? null,
@@ -190,13 +193,17 @@ const TrailMap = ({ races, selected, onSelect }: ITrailMapProps) => {
 
   const onClick = useCallback(
     (event: MapLayerMouseEvent) => {
+      // the click that ends a drag belongs to the gesture, not to a race
+      if (consumeDrag()) {
+        return;
+      }
       const feature = event.features?.[0];
       const raceId = feature?.properties?.raceId;
       if (typeof raceId === 'string' && raceId) {
         onSelect(raceId);
       }
     },
-    [onSelect]
+    [consumeDrag, onSelect]
   );
 
   const start = selectedRace?.points[0];
@@ -210,6 +217,7 @@ const TrailMap = ({ races, selected, onSelect }: ITrailMapProps) => {
           <span className="status-dot" />
           terrain / 三维地形
         </span>
+        <span className="chip">左键旋转 · 右键平移</span>
         <span className="chip">
           {routeCount} / {races.length} routes
         </span>
